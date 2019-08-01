@@ -29,7 +29,12 @@ class ApiTests(unittest.TestCase):
         self.client.post(
             "api/system-baseline/v0/baselines",
             headers=fixtures.AUTH_HEADER,
-            json=fixtures.BASELINE_LOAD,
+            json=fixtures.BASELINE_ONE_LOAD,
+        )
+        self.client.post(
+            "api/system-baseline/v0/baselines",
+            headers=fixtures.AUTH_HEADER,
+            json=fixtures.BASELINE_TWO_LOAD,
         )
 
     def tearDown(self):
@@ -38,10 +43,11 @@ class ApiTests(unittest.TestCase):
         )
         data = json.loads(response.data)["data"]
         for baseline in data:
-            self.client.delete(
+            response = self.client.delete(
                 "api/system-baseline/v0/baselines/%s" % baseline["id"],
                 headers=fixtures.AUTH_HEADER,
             )
+            self.assertEqual(response.status_code, 200)
 
     def test_fetch_baseline_list(self):
         response = self.client.get(
