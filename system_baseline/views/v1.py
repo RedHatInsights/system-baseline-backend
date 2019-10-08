@@ -16,7 +16,7 @@ from system_baseline import metrics, app_config, validators
 from system_baseline.models import SystemBaseline, db
 from system_baseline.exceptions import FactValidationError
 
-section = Blueprint("v0", __name__)
+section = Blueprint("v1", __name__)
 
 pagination_link_template = "%s?limit=%s&offset=%s&order_by=%s&order_how=%s"
 
@@ -349,6 +349,8 @@ def copy_baseline_by_id(baseline_id, display_name):
     db.session.expunge(copy_baseline)
     make_transient(copy_baseline)
     copy_baseline.id = None
+    copy_baseline.created_on = None
+    copy_baseline.modified_on = None
     copy_baseline.display_name = display_name
     db.session.add(copy_baseline)
     db.session.commit()
