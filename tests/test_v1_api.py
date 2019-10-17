@@ -66,6 +66,60 @@ class InvalidFactsTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
 
+class ApiSortTests(unittest.TestCase):
+    def setUp(self):
+        test_connexion_app = app.create_app()
+        test_flask_app = test_connexion_app.app
+        self.client = test_flask_app.test_client()
+        self.client.post(
+            "api/system-baseline/v1/baselines",
+            headers=fixtures.AUTH_HEADER,
+            json=fixtures.BASELINE_UNSORTED_LOAD,
+        )
+
+    def tearDown(self):
+        response = self.client.get(
+            "api/system-baseline/v1/baselines", headers=fixtures.AUTH_HEADER
+        )
+        data = json.loads(response.data)["data"]
+        for baseline in data:
+            response = self.client.delete(
+                "api/system-baseline/v1/baselines/%s" % baseline["id"],
+                headers=fixtures.AUTH_HEADER,
+            )
+            self.assertEqual(response.status_code, 200)
+
+    def test_fetch_sorted_baseline_facts(self):
+        response = self.client.get(
+            "api/system-baseline/v1/baselines", headers=fixtures.AUTH_HEADER
+        )
+        self.assertEqual(response.status_code, 200)
+        result = json.loads(response.data)
+        self.assertEqual(result["meta"]["count"], 1)
+        response = self.client.get(
+            "api/system-baseline/v1/baselines/%s" % result["data"][0]["id"],
+            headers=fixtures.AUTH_HEADER,
+        )
+        result = json.loads(response.data)
+        # confirm that we get sorted names back, including nested names
+        self.assertEqual(
+            result["data"][0]["baseline_facts"],
+            [
+                {"name": "A-name", "value": "64GB"},
+                {
+                    "name": "B-name",
+                    "values": [
+                        {"name": "a-nested_cpu_sockets", "value": "32"},
+                        {"name": "b-nested_cpu_sockets", "value": "32"},
+                        {"name": "Z-nested_cpu_sockets", "value": "32"},
+                    ],
+                },
+                {"name": "C-name", "value": "128GB"},
+                {"name": "D-name", "value": "16"},
+            ],
+        )
+
+
 class ApiTests(unittest.TestCase):
     def setUp(self):
         test_connexion_app = app.create_app()
@@ -320,11 +374,22 @@ class ApiDuplicateTests(unittest.TestCase):
             headers=fixtures.AUTH_HEADER,
             json=fixtures.BASELINE_DUPLICATES_LOAD,
         )
-        self.assertIn("declared more than once", response.data.decode("utf-8"))
+        self.assertIn(
+            "name nested_cpu_sockets declared more than once",
+            response.data.decode("utf-8"),
+        )
 
         response = self.client.post(
             "api/system-baseline/v1/baselines",
             headers=fixtures.AUTH_HEADER,
             json=fixtures.BASELINE_DUPLICATES_TWO_LOAD,
         )
+        self.assertIn("memory declared more than once", response.data.decode("utf-8"))
+
+        response = self.client.post(
+            "api/system-baseline/v1/baselines",
+            headers=fixtures.AUTH_HEADER,
+            json=fixtures.BASELINE_DUPLICATES_THREE_LOAD,
+        )
+        self.assertEqual(response.status_code, 400)
         self.assertIn("memory declared more than once", response.data.decode("utf-8"))
