@@ -134,6 +134,12 @@ BASELINE_THREE_LOAD = {
     ],
     "display_name": "cpu + mem baseline",
 }
+BASELINE_UNDERSCORE_LOAD = {
+    "baseline_facts": [
+        {"name": "nested", "values": [{"name": "cpu_sockets", "value": "16"}]}
+    ],
+    "display_name": "has_an_underscore",
+}
 BASELINE_DUPLICATES_LOAD = {
     "baseline_facts": [
         {"name": "memory", "value": "64GB"},
@@ -184,6 +190,17 @@ BASELINE_UNSORTED_LOAD = {
     "display_name": "duplicate cpu + mem baseline",
 }
 
+BASELINE_VALUE_VALUES_LOAD = {
+    "baseline_facts": [
+        {
+            "name": "arch",
+            "value": "x86_64",
+            "values": [{"name": "XXXXXX", "value": "YYYY"}],
+        }
+    ],
+    "display_name": "value values baseline",
+}
+
 BASELINE_PATCH = {
     "display_name": "ABCDE",
     "facts_patch": [
@@ -200,9 +217,32 @@ BASELINE_PATCH = {
     ],
 }
 
+BASELINE_PATCH_EMPTY_VALUE = {
+    "display_name": "ABCDE",
+    "facts_patch": [{"op": "replace", "path": "/0/values/0/value", "value": ""}],
+}
+
+BASELINE_PATCH_EMPTY_NAME = {
+    "display_name": "ABCDE",
+    "facts_patch": [{"op": "replace", "path": "/0/values/0/name", "value": ""}],
+}
+
+
 BASELINE_PARTIAL_CONFLICT = {"display_name": "arch baseline", "facts_patch": []}
+# >200 char in display_name
+BASELINE_PATCH_LONG_NAME = {
+    "display_name": "arch baseline33333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333",  # noqa: E501
+    "facts_patch": [],
+}
+BASELINE_TOUCH = {"display_name": "updated baseline", "facts_patch": []}
 CREATE_FROM_INVENTORY = {
     "display_name": "created_from_inventory",
+    "inventory_uuid": "df925152-c45d-11e9-a1f0-c85b761454fa",
+}
+
+# >200 chars in display_name
+CREATE_FROM_INVENTORY_LONG_NAME = {
+    "display_name": "created_from_inventoryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",  # noqa: E501
     "inventory_uuid": "df925152-c45d-11e9-a1f0-c85b761454fa",
 }
 

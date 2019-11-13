@@ -8,7 +8,7 @@ from sqlalchemy.orm.session import make_transient
 
 from kerlescan import view_helpers
 from kerlescan import profile_parser
-from kerlescan.exceptions import HTTPError
+from kerlescan.exceptions import HTTPError, ItemNotReturned
 from kerlescan.inventory_service_interface import fetch_systems_with_profiles
 from kerlescan.service_interface import get_key_from_headers
 
@@ -23,15 +23,15 @@ pagination_link_template = "%s?limit=%s&offset=%s&order_by=%s&order_how=%s"
 FACTS_MAXSIZE = 2 ** 19  # 512KB
 
 
-def _create_first_link(path, limit, offset, total, order_by, order_how):
+def _create_first_link(path, limit, offset, count, order_by, order_how):
     first_link = pagination_link_template % (path, limit, 0, order_by, order_how)
     return first_link
 
 
-def _create_previous_link(path, limit, offset, total, order_by, order_how):
+def _create_previous_link(path, limit, offset, count, order_by, order_how):
     # if we are at the beginning, do not create a previous link
     if offset == 0 or offset - limit < 0:
-        return _create_first_link(path, limit, offset, total, order_by, order_how)
+        return _create_first_link(path, limit, offset, count, order_by, order_how)
     previous_link = pagination_link_template % (
         request.path,
         limit,
@@ -42,10 +42,10 @@ def _create_previous_link(path, limit, offset, total, order_by, order_how):
     return previous_link
 
 
-def _create_next_link(path, limit, offset, total, order_by, order_how):
+def _create_next_link(path, limit, offset, count, order_by, order_how):
     # if we are at the end, do not create a next link
-    if limit + offset >= total:
-        return _create_last_link(path, limit, offset, total, order_by, order_how)
+    if limit + offset >= count:
+        return _create_last_link(path, limit, offset, count, order_by, order_how)
     next_link = pagination_link_template % (
         request.path,
         limit,
@@ -56,8 +56,8 @@ def _create_next_link(path, limit, offset, total, order_by, order_how):
     return next_link
 
 
-def _create_last_link(path, limit, offset, total, order_by, order_how):
-    final_offset = total - limit if (total - limit) >= 0 else 0
+def _create_last_link(path, limit, offset, count, order_by, order_how):
+    final_offset = count - limit if (count - limit) >= 0 else 0
     last_link = pagination_link_template % (
         path,
         limit,
@@ -69,7 +69,7 @@ def _create_last_link(path, limit, offset, total, order_by, order_how):
 
 
 def _build_paginated_baseline_list_response(
-    total, limit, offset, order_by, order_how, baseline_list, withhold_facts=False
+    count, limit, offset, order_by, order_how, baseline_list, withhold_facts=False
 ):
     json_baseline_list = [
         baseline.to_json(withhold_facts=withhold_facts) for baseline in baseline_list
@@ -80,10 +80,10 @@ def _build_paginated_baseline_list_response(
         "offset": offset,
         "order_by": order_by,
         "order_how": order_how,
-        "total": total,
+        "count": count,
     }
     json_output = {
-        "meta": {"count": total, "total_available": _get_total_baseline_count()},
+        "meta": {"count": count, "total_available": _get_total_baseline_count()},
         "links": {
             "first": _create_first_link(**link_params),
             "next": _create_next_link(**link_params),
@@ -120,14 +120,13 @@ def get_baselines_by_ids(baseline_ids, limit, order_by, order_how, offset):
     query = SystemBaseline.query.filter(
         SystemBaseline.account == account_number, SystemBaseline.id.in_(baseline_ids)
     )
-    total_count = query.count()
 
     query = _create_ordering(order_by, order_how, query)
     query = query.limit(limit).offset(offset)
     query_results = query.all()
 
     return _build_paginated_baseline_list_response(
-        total_count,
+        len(query_results),
         limit,
         offset,
         order_by,
@@ -144,13 +143,32 @@ def delete_baselines_by_ids(baseline_ids):
     delete a list of baselines given their ID
     """
     _validate_uuids(baseline_ids)
+    _delete_baselines(baseline_ids)
+    return "OK"
+
+
+@metrics.baseline_delete_requests.time()
+@metrics.api_exceptions.count_exceptions()
+def delete_baselines_by_list(baseline_ids_list):
+    """
+    delete a list of baselines given their IDs as a list
+    """
+    baseline_ids = baseline_ids_list["baseline_ids"]
+    _validate_uuids(baseline_ids)
+    _delete_baselines(baseline_ids)
+    return "OK"
+
+
+def _delete_baselines(baseline_ids):
+    """
+    delete baselines
+    """
     account_number = view_helpers.get_account_number(request)
     query = SystemBaseline.query.filter(
         SystemBaseline.account == account_number, SystemBaseline.id.in_(baseline_ids)
     )
     query.delete(synchronize_session="fetch")
     db.session.commit()
-    return "OK"
 
 
 def _create_ordering(order_by, order_how, query):
@@ -168,6 +186,11 @@ def _create_ordering(order_by, order_how, query):
             query = query.order_by(SystemBaseline.created_on.desc())
         elif order_how == "ASC":
             query = query.order_by(SystemBaseline.created_on.asc())
+    elif order_by == "updated":
+        if order_how == "DESC":
+            query = query.order_by(SystemBaseline.modified_on.desc())
+        elif order_how == "ASC":
+            query = query.order_by(SystemBaseline.modified_on.asc())
 
     return query
 
@@ -182,9 +205,9 @@ def get_baselines(limit, offset, order_by, order_how, display_name=None):
     query = SystemBaseline.query.filter(SystemBaseline.account == account_number)
 
     if display_name:
-        query = query.filter(SystemBaseline.display_name.contains(display_name))
-
-    total_count = query.count()
+        query = query.filter(
+            SystemBaseline.display_name.contains(display_name, autoescape=True)
+        )
 
     query = _create_ordering(order_by, order_how, query)
 
@@ -192,7 +215,7 @@ def get_baselines(limit, offset, order_by, order_how, display_name=None):
     query_results = query.all()
 
     return _build_paginated_baseline_list_response(
-        total_count,
+        len(query_results),
         limit,
         offset,
         order_by,
@@ -270,12 +293,19 @@ def create_baseline(system_baseline_in):
         baseline_facts = system_baseline_in["baseline_facts"]
     elif "inventory_uuid" in system_baseline_in:
         auth_key = get_key_from_headers(request.headers)
-        system_with_profile = fetch_systems_with_profiles(
-            [system_baseline_in["inventory_uuid"]],
-            auth_key,
-            current_app.logger,
-            get_event_counters(),
-        )[0]
+        try:
+            system_with_profile = fetch_systems_with_profiles(
+                [system_baseline_in["inventory_uuid"]],
+                auth_key,
+                current_app.logger,
+                get_event_counters(),
+            )[0]
+        except ItemNotReturned:
+            raise HTTPError(
+                HTTPStatus.BAD_REQUEST,
+                message="inventory UUID %s not available"
+                % system_baseline_in["inventory_uuid"],
+            )
 
         system_name = profile_parser.get_name(system_with_profile)
         parsed_profile = profile_parser.parse_profile(
@@ -293,8 +323,7 @@ def create_baseline(system_baseline_in):
         baseline_facts = group_baselines(facts)
 
     try:
-        validators.check_facts_length(baseline_facts)
-        validators.check_for_duplicate_names(baseline_facts)
+        _validate_facts(baseline_facts)
     except FactValidationError as e:
         raise HTTPError(HTTPStatus.BAD_REQUEST, message=e.message)
 
@@ -420,8 +449,10 @@ def update_baseline(baseline_id, system_baseline_patch):
         updated_facts = jsonpatch.apply_patch(
             baseline.baseline_facts, system_baseline_patch["facts_patch"]
         )
-        validators.check_facts_length(updated_facts)
+        _validate_facts(updated_facts)
         baseline.baseline_facts = updated_facts
+    except FactValidationError as e:
+        raise HTTPError(HTTPStatus.BAD_REQUEST, message=e.message)
     except (jsonpatch.JsonPatchException, jsonpointer.JsonPointerException):
         raise HTTPError(
             HTTPStatus.BAD_REQUEST, message="unable to apply patch to baseline"
@@ -438,6 +469,16 @@ def update_baseline(baseline_id, system_baseline_patch):
         SystemBaseline.account == account_number, SystemBaseline.id == baseline_id
     )
     return [query.first().to_json()]
+
+
+def _validate_facts(facts):
+    """
+    helper to run common validations
+    """
+    validators.check_facts_length(facts)
+    validators.check_for_duplicate_names(facts)
+    validators.check_for_empty_name_values(facts)
+    validators.check_for_value_values(facts)
 
 
 @section.before_app_request
