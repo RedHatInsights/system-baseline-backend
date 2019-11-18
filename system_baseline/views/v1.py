@@ -13,6 +13,7 @@ from kerlescan.inventory_service_interface import fetch_systems_with_profiles
 from kerlescan.service_interface import get_key_from_headers
 
 from system_baseline import metrics, app_config, validators
+from system_baseline.version import app_version
 from system_baseline.models import SystemBaseline, db
 from system_baseline.exceptions import FactValidationError
 
@@ -107,6 +108,13 @@ def _get_total_baseline_count():
     account_number = view_helpers.get_account_number(request)
     query = SystemBaseline.query.filter(SystemBaseline.account == account_number)
     return query.count()
+
+
+def get_version():
+    """
+    return the service version
+    """
+    return {"version": app_version}
 
 
 @metrics.baseline_fetch_requests.time()
@@ -266,7 +274,7 @@ def get_event_counters():
     small helper to create a dict of event counters
     """
     return {
-        "systems_compared_no_sysprofile": metrics.systems_compared_no_sysprofile,
+        "systems_compared_no_sysprofile": metrics.inventory_service_no_profile,
         "inventory_service_requests": metrics.inventory_service_requests,
         "inventory_service_exceptions": metrics.inventory_service_exceptions,
     }
@@ -292,6 +300,7 @@ def create_baseline(system_baseline_in):
     if "baseline_facts" in system_baseline_in:
         baseline_facts = system_baseline_in["baseline_facts"]
     elif "inventory_uuid" in system_baseline_in:
+        _validate_uuids([system_baseline_in["inventory_uuid"]])
         auth_key = get_key_from_headers(request.headers)
         try:
             system_with_profile = fetch_systems_with_profiles(
