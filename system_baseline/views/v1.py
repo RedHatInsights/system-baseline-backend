@@ -377,6 +377,27 @@ def _validate_uuids(uuids):
             message="malformed UUID requested (%s)" % ",".join(uuids),
         )
 
+    uuid_set = set(uuids)
+    if len(uuid_set) < len(uuids):
+        raise HTTPError(
+            HTTPStatus.BAD_REQUEST, message="duplicate UUIDs specified in request"
+        )
+
+
+def _sort_baseline_facts(baseline_facts):
+    """
+    helper method to sort baseline facts by name before saving to the DB.
+    """
+    sorted_baseline_facts = sorted(
+        baseline_facts, key=lambda fact: fact["name"].lower()
+    )
+    for fact in sorted_baseline_facts:
+        if "values" in fact:
+            fact["values"] = sorted(
+                fact["values"], key=lambda fact: fact["name"].lower()
+            )
+    return sorted_baseline_facts
+
 
 def _sort_baseline_facts(baseline_facts):
     """
@@ -488,6 +509,7 @@ def _validate_facts(facts):
     validators.check_for_duplicate_names(facts)
     validators.check_for_empty_name_values(facts)
     validators.check_for_value_values(facts)
+    validators.check_name_value_length(facts)
 
 
 @section.before_app_request
