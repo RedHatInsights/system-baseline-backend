@@ -190,6 +190,20 @@ class ApiGeneralTests(ApiTest):
         self.assertEqual(result["meta"]["count"], 2)
         self.assertEqual(result["meta"]["total_available"], 2)
 
+    def test_delete_baseline_list(self):
+        response = self.client.get(
+            "api/system-baseline/v1/baselines", headers=fixtures.AUTH_HEADER
+        )
+        self.assertEqual(response.status_code, 200)
+        result = json.loads(response.data)
+        ids_to_delete = [b["id"] for b in result["data"]]
+        response = self.client.delete(
+            "api/system-baseline/v1/baselines",
+            headers=fixtures.AUTH_HEADER,
+            json={"baseline_ids": ids_to_delete},
+        )
+        self.assertEqual(response.status_code, 200)
+
     def test_fetch_baseline_list_sort_display_name(self):
         response = self.client.get(
             "api/system-baseline/v1/baselines?order_by=display_name",

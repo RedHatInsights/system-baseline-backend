@@ -17,7 +17,8 @@ podman-compose = "*"
 python-semantic-release = "*"
 
 [packages]
-connexion = {extras = ["swagger-ui"],version = "==2.5.1"}
+connexion = {extras = ["swagger-ui"],version = "*"}
+werkzeug = "~=0.16"
 Flask = "*"
 gunicorn = "*"
 prometheus_client = "*"
