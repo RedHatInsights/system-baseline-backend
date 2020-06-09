@@ -278,6 +278,15 @@ def create_baseline(system_baseline_in):
     return baseline.to_json()
 
 
+@metrics.baseline_create_requests.time()
+@metrics.api_exceptions.count_exceptions()
+def create_baseline_from_hsp(hsp_id):
+    """
+    create a baseline from an hsp
+    """
+    account_number = view_helpers.get_account_number(request)
+
+
 def _check_for_existing_display_name(display_name, account_number):
     """
     check to see if a display name already exists for an account, and raise an exception if so.
