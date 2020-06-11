@@ -318,6 +318,7 @@ CREATE_FROM_INVENTORY_MALFORMED_UUID = {
     "inventory_uuid": "this is not a uuid",
 }
 
+
 SYSTEM_WITH_PROFILE = {
     "account": "9876543",
     "bios_uuid": "e380fd4a-28ae-11e9-974c-c85b761454fb",
