@@ -12,6 +12,8 @@ from kerlescan.inventory_service_interface import fetch_systems_with_profiles
 from kerlescan.service_interface import get_key_from_headers
 from kerlescan.paginate import build_paginated_baseline_list_response
 
+from historical_system_profiles_backend.models import HistoricalSystemProfile
+
 from system_baseline import metrics, app_config, validators
 from system_baseline.version import app_version
 from system_baseline.models import SystemBaseline, db
@@ -280,11 +282,38 @@ def create_baseline(system_baseline_in):
 
 @metrics.baseline_create_requests.time()
 @metrics.api_exceptions.count_exceptions()
-def create_baseline_from_hsp(hsp_id):
+def create_baseline_from_hsp(hsp_id, display_name):
     """
     create a baseline from an hsp
     """
     account_number = view_helpers.get_account_number(request)
+
+    _validate_uuids([hsp_id])
+
+    # ensure display_name is not null
+    if not display_name:
+        raise HTTPError(
+            HTTPStatus.BAD_REQUEST, message="no value given for display_name"
+        )
+
+    account_number = view_helpers.get_account_number(request)
+    _check_for_existing_display_name(display_name, account_number)
+    _check_for_whitespace_in_display_name(display_name)
+
+    query = HistoricalSystemProfile.query.filter(
+        HistoricalSystemProfile.account == account_number, HistoricalSystemProfile.id == hsp_id
+    )
+
+    copy_hsp = query.first_or_404()
+    db.session.expunge(copy_hsp)
+    make_transient(copy_hsp)
+    copy_hsp.id = None
+    copy_hsp.created_on = None
+    copy_hsp.modified_on = None
+    copy_hsp.display_name = display_name
+    db.session.add(copy_hsp)
+    db.session.commit()
+    return copy_hsp.to_json()
 
 
 def _check_for_existing_display_name(display_name, account_number):

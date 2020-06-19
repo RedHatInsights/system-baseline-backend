@@ -187,6 +187,32 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /baselines/from_hsp/{hsp_id}:
+    parameters:
+      - $ref: '#/components/parameters/HistoricalSystemProfileId'
+    post:
+      summary: create a baseline from an hsp
+      description: "create a baseline from an hsp"
+      operationId: system_baseline.views.v1.create_baseline_from_hsp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HSPIn"
+              x-body-name: hsp_in
+      responses:
+        '200':
+          description: a created baseline object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Baseline"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   responses:
     InternalServerError:
@@ -320,6 +346,14 @@ components:
             type: string
             minLength: 32
             maxLength: 36
+    HSPIn:
+      type: object
+      additionalProperties: false
+      required:
+        - hsp_id
+      properties:
+        hsp_id:
+          type: string
     JsonPatch:
       description: a JSON patch
       type: object
@@ -417,6 +451,12 @@ components:
     BaselineId:
       in: path
       name: baseline_id
+      required: true
+      schema:
+        type: string
+    HistoricalSystemProfileId:
+      in: path
+      name: hsp_id
       required: true
       schema:
         type: string
