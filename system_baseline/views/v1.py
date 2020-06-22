@@ -8,11 +8,10 @@ from sqlalchemy.orm.session import make_transient
 from kerlescan import view_helpers
 from kerlescan import profile_parser
 from kerlescan.exceptions import HTTPError, ItemNotReturned
+from kerlescan.hsp_service_interface import fetch_historical_sys_profiles
 from kerlescan.inventory_service_interface import fetch_systems_with_profiles
 from kerlescan.service_interface import get_key_from_headers
 from kerlescan.paginate import build_paginated_baseline_list_response
-
-from historical_system_profiles_backend.models import HistoricalSystemProfile
 
 from system_baseline import metrics, app_config, validators
 from system_baseline.version import app_version
@@ -300,20 +299,70 @@ def create_baseline_from_hsp(hsp_id, display_name):
     _check_for_existing_display_name(display_name, account_number)
     _check_for_whitespace_in_display_name(display_name)
 
-    query = HistoricalSystemProfile.query.filter(
-        HistoricalSystemProfile.account == account_number, HistoricalSystemProfile.id == hsp_id
+    auth_key = get_key_from_headers(request.headers)
+    hsp = fetch_historical_sys_profiles(
+        hsp_id, auth_key, current_app.logger, get_event_counters()
     )
 
-    copy_hsp = query.first_or_404()
-    db.session.expunge(copy_hsp)
-    make_transient(copy_hsp)
-    copy_hsp.id = None
-    copy_hsp.created_on = None
-    copy_hsp.modified_on = None
-    copy_hsp.display_name = display_name
-    db.session.add(copy_hsp)
+    if "values" in hsp and "value" in hsp:
+        raise HTTPError(
+            HTTPStatus.BAD_REQUEST,
+            message="'values' and 'value' cannot both be defined for system baseline",
+        )
+
+    _check_for_existing_display_name(hsp["display_name"], account_number)
+    _check_for_whitespace_in_display_name(hsp["display_name"])
+
+    baseline_facts = []
+    if "baseline_facts" in hsp:
+        baseline_facts = hsp["baseline_facts"]
+    elif "inventory_uuid" in hsp:
+        _validate_uuids([hsp["inventory_uuid"]])
+        auth_key = get_key_from_headers(request.headers)
+        try:
+            system_with_profile = fetch_systems_with_profiles(
+                [hsp["inventory_uuid"]],
+                auth_key,
+                current_app.logger,
+                get_event_counters(),
+            )[0]
+        except ItemNotReturned:
+            raise HTTPError(
+                HTTPStatus.BAD_REQUEST,
+                message="inventory UUID %s not available"
+                % hsp["inventory_uuid"],
+            )
+
+        system_name = profile_parser.get_name(system_with_profile)
+        parsed_profile = profile_parser.parse_profile(
+            system_with_profile["system_profile"], system_name, current_app.logger
+        )
+        facts = []
+        for fact in parsed_profile:
+            if fact not in ["id", "name"] and parsed_profile[fact] not in [
+                "N/A",
+                "None",
+                None,
+            ]:
+                facts.append({"name": fact, "value": parsed_profile[fact]})
+
+        baseline_facts = group_baselines(facts)
+
+    try:
+        _validate_facts(baseline_facts)
+    except FactValidationError as e:
+        raise HTTPError(HTTPStatus.BAD_REQUEST, message=e.message)
+
+    baseline = SystemBaseline(
+        account=account_number,
+        display_name=hsp["display_name"],
+        baseline_facts=baseline_facts,
+    )
+    baseline.baseline_facts = _sort_baseline_facts(baseline.baseline_facts)
+    db.session.add(baseline)
     db.session.commit()
-    return copy_hsp.to_json()
+
+    return baseline.to_json()
 
 
 def _check_for_existing_display_name(display_name, account_number):
