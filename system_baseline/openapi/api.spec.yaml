@@ -189,7 +189,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
   /baselines/from_hsp/{hsp_id}:
     parameters:
-      - $ref: '#/components/parameters/HistoricalSystemProfileId'
+      - $ref: '#/components/parameters/UUID'
     post:
       summary: create a baseline from an hsp
       description: "create a baseline from an hsp"
@@ -330,6 +330,8 @@ components:
           $ref: "#/components/schemas/DisplayName"
         inventory_uuid:
           type: string
+        hsp_uuid:
+          type: string
         baseline_facts:
           type: array
           items:
@@ -353,7 +355,7 @@ components:
         - hsp_id
       properties:
         hsp_id:
-          type: string
+          type: uuid
     JsonPatch:
       description: a JSON patch
       type: object
@@ -454,9 +456,9 @@ components:
       required: true
       schema:
         type: string
-    HistoricalSystemProfileId:
-      in: path
-      name: hsp_id
-      required: true
+    UUID:
+      in: query
+      name: uuid
+      required: false
       schema:
-        type: string
+        type: uuid

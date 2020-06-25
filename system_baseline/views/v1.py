@@ -207,6 +207,8 @@ def get_event_counters():
         "systems_compared_no_sysprofile": metrics.inventory_service_no_profile,
         "inventory_service_requests": metrics.inventory_service_requests,
         "inventory_service_exceptions": metrics.inventory_service_exceptions,
+        "hsp_service_requests": metrics.hsp_service_requests,
+        "hsp_service_exceptions": metrics.hsp_service_exceptions,
     }
 
 
@@ -281,37 +283,26 @@ def create_baseline(system_baseline_in):
 
 @metrics.baseline_create_requests.time()
 @metrics.api_exceptions.count_exceptions()
-def create_baseline_from_hsp(hsp_id, display_name):
+def create_baseline_from_hsp(hsp_id):
     """
     create a baseline from an hsp
     """
-    account_number = view_helpers.get_account_number(request)
-
     _validate_uuids([hsp_id])
 
-    # ensure display_name is not null
-    if not display_name:
-        raise HTTPError(
-            HTTPStatus.BAD_REQUEST, message="no value given for display_name"
-        )
-
     account_number = view_helpers.get_account_number(request)
-    _check_for_existing_display_name(display_name, account_number)
-    _check_for_whitespace_in_display_name(display_name)
-
     auth_key = get_key_from_headers(request.headers)
     hsp = fetch_historical_sys_profiles(
         hsp_id, auth_key, current_app.logger, get_event_counters()
     )
 
+    _check_for_existing_display_name(hsp["display_name"], account_number)
+    _check_for_whitespace_in_display_name(hsp["display_name"])
+    
     if "values" in hsp and "value" in hsp:
         raise HTTPError(
             HTTPStatus.BAD_REQUEST,
             message="'values' and 'value' cannot both be defined for system baseline",
         )
-
-    _check_for_existing_display_name(hsp["display_name"], account_number)
-    _check_for_whitespace_in_display_name(hsp["display_name"])
 
     baseline_facts = []
     if "baseline_facts" in hsp:
