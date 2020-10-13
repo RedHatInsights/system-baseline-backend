@@ -513,7 +513,7 @@ def ensure_account_number():
 @section.before_app_request
 def ensure_rbac_read():
     return view_helpers.ensure_has_permission(
-        permissions=["drift:*:*", "drift:baselines:read"],
+        permissions=["drift:*:*", "drift:baselines:read", "inventory:*:read"],
         application="drift",
         app_name="system-baseline",
         request=request,
