@@ -23,6 +23,7 @@ def _update_baseline_counts():
     """
     total_baselines = SystemBaseline.query.count()
     total_accounts = SystemBaseline.query.distinct(SystemBaseline.account.name).count()
+    # TODO: (audit-log) read
     total_accounts_ones = db.engine.execute(RANGES, low=0, high=10).scalar()
     total_accounts_tens = db.engine.execute(RANGES, low=10, high=100).scalar()
     total_accounts_hundred_plus = db.engine.execute(

@@ -31,6 +31,7 @@ def _get_total_available_baselines():
     """
     account_number = view_helpers.get_account_number(request)
     query = SystemBaseline.query.filter(SystemBaseline.account == account_number)
+    # TODO: (audit-log) read
     return query.count()
 
 
@@ -49,25 +50,31 @@ def get_baselines_by_ids(baseline_ids, limit, offset, order_by, order_how):
     """
     validate_uuids(baseline_ids)
     if len(set(baseline_ids)) < len(baseline_ids):
+        # TODO: (audit-log) failure
         raise HTTPError(HTTPStatus.BAD_REQUEST, message="duplicate IDs in request")
     account_number = view_helpers.get_account_number(request)
     query = SystemBaseline.query.filter(
         SystemBaseline.account == account_number, SystemBaseline.id.in_(baseline_ids)
     )
+    # TODO: (audit-log) read
     full_results = query.all()
     if len(full_results) < len(baseline_ids):
         fetched_ids = {str(result.id) for result in full_results}
         missing_ids = set(baseline_ids) - fetched_ids
+        # TODO: (audit-log) failure
         raise HTTPError(
             HTTPStatus.NOT_FOUND,
             message="ids [%s] not available to display" % ", ".join(missing_ids),
         )
 
+    # TODO: (audit-log) read
     count = query.count()
+    # TODO: (audit-log) read system_baseline/views/v1.py#_get_total_available_baselines
     total_available = _get_total_available_baselines()
 
     query = _create_ordering(order_by, order_how, query)
     query = query.limit(limit).offset(offset)
+    # TODO: (audit-log) read
     query_results = query.all()
 
     json_list = [baseline.to_json(withhold_facts=False) for baseline in query_results]
@@ -86,7 +93,9 @@ def delete_baselines_by_ids(baseline_ids):
     ensure_rbac_write()
     validate_uuids(baseline_ids)
     if len(set(baseline_ids)) < len(baseline_ids):
+        # TODO: (audit-log) failure
         raise HTTPError(HTTPStatus.BAD_REQUEST, message="duplicate IDs in request")
+    # TODO: (audit-log) delete system-baseline-backend/system_baseline/views/v1.py#_delete_baselines
     _delete_baselines(baseline_ids)
     return "OK"
 
@@ -100,6 +109,7 @@ def create_deletion_request(body):
     ensure_rbac_write()
     baseline_ids = body["baseline_ids"]
     validate_uuids(baseline_ids)
+    # TODO: (audit-log) delete system-baseline-backend/system_baseline/views/v1.py#_delete_baselines
     _delete_baselines(baseline_ids)
     return "OK"
 
@@ -113,16 +123,19 @@ def _delete_baselines(baseline_ids):
         SystemBaseline.account == account_number, SystemBaseline.id.in_(baseline_ids)
     )
 
+    # TODO: (audit-log) read
     full_results = query.all()
     if len(full_results) < len(baseline_ids):
         fetched_ids = {str(result.id) for result in full_results}
         missing_ids = set(baseline_ids) - fetched_ids
+        # TODO: (audit-log) failure
         raise HTTPError(
             HTTPStatus.NOT_FOUND,
             message="ids [%s] not available to delete" % ", ".join(missing_ids),
         )
 
     query.delete(synchronize_session="fetch")
+    # TODO: (audit-log) delete
     db.session.commit()
 
 
@@ -168,12 +181,15 @@ def get_baselines(limit, offset, order_by, order_how, display_name=None):
                 display_name.lower(), autoescape=True
             )
         )
+    # TODO: (audit-log) read
     count = query.count()
+    # TODO: (audit-log) read system_baseline/views/v1.py#_get_total_available_baselines
     total_available = _get_total_available_baselines()
 
     query = _create_ordering(order_by, order_how, query)
 
     query = query.limit(limit).offset(offset)
+    # TODO: (audit-log) read
     query_results = query.all()
 
     json_list = [baseline.to_json(withhold_facts=True) for baseline in query_results]
@@ -249,22 +265,26 @@ def create_baseline(system_baseline_in):
     account_number = view_helpers.get_account_number(request)
 
     if "values" in system_baseline_in and "value" in system_baseline_in:
+        # TODO: (audit-log) failure
         raise HTTPError(
             HTTPStatus.BAD_REQUEST,
             message="'values' and 'value' cannot both be defined for system baseline",
         )
 
+    # TODO: (audit-log) read system_baseline/views/v1.py#_check_for_existing_display_name
     _check_for_existing_display_name(system_baseline_in["display_name"], account_number)
     _check_for_whitespace_in_display_name(system_baseline_in["display_name"])
 
     baseline_facts = []
     if "baseline_facts" in system_baseline_in:
         if "inventory_uuid" in system_baseline_in:
+            # TODO: (audit-log) failure
             raise HTTPError(
                 HTTPStatus.BAD_REQUEST,
                 message="Both baseline facts and inventory id provided, can clone only one.",
             )
         if "hsp_uuid" in system_baseline_in:
+            # TODO: (audit-log) failure
             raise HTTPError(
                 HTTPStatus.BAD_REQUEST,
                 message="Both baseline facts and hsp id provided, can clone only one.",
@@ -272,6 +292,7 @@ def create_baseline(system_baseline_in):
         baseline_facts = system_baseline_in["baseline_facts"]
     elif "hsp_uuid" in system_baseline_in:
         if "inventory_uuid" in system_baseline_in:
+            # TODO: (audit-log) failure
             raise HTTPError(
                 HTTPStatus.BAD_REQUEST,
                 message="Both hsp id and system id provided, can clone only one.",
@@ -279,6 +300,7 @@ def create_baseline(system_baseline_in):
         validate_uuids([system_baseline_in["hsp_uuid"]])
         auth_key = get_key_from_headers(request.headers)
         try:
+            # TODO: (audit-log) read kerlescan/hsp_service_interface.py#fetch_historical_sys_profiles
             hsp = fetch_historical_sys_profiles(
                 [system_baseline_in["hsp_uuid"]],
                 auth_key,
@@ -286,11 +308,13 @@ def create_baseline(system_baseline_in):
                 get_event_counters(),
             )[0]
         except ItemNotReturned:
+            # TODO: (audit-log) failure
             raise HTTPError(
                 HTTPStatus.NOT_FOUND,
                 message="hsp UUID %s not available" % system_baseline_in["hsp_uuid"],
             )
         except RBACDenied as error:
+            # TODO: (audit-log) failure
             raise HTTPError(HTTPStatus.FORBIDDEN, message=error.message)
 
         system_name = "clone_from_hsp_unused"
@@ -301,6 +325,7 @@ def create_baseline(system_baseline_in):
         validate_uuids([system_baseline_in["inventory_uuid"]])
         auth_key = get_key_from_headers(request.headers)
         try:
+            # TODO: (audit-log) read kerlescan/inventory_service_interface.py#fetch_systems_with_profiles
             system_with_profile = fetch_systems_with_profiles(
                 [system_baseline_in["inventory_uuid"]],
                 auth_key,
@@ -308,12 +333,14 @@ def create_baseline(system_baseline_in):
                 get_event_counters(),
             )[0]
         except ItemNotReturned:
+            # TODO: (audit-log) failure
             raise HTTPError(
                 HTTPStatus.NOT_FOUND,
                 message="inventory UUID %s not available"
                 % system_baseline_in["inventory_uuid"],
             )
         except RBACDenied as error:
+            # TODO: (audit-log) failure
             raise HTTPError(HTTPStatus.FORBIDDEN, message=error.message)
 
         system_name = profile_parser.get_name(system_with_profile)
@@ -324,6 +351,7 @@ def create_baseline(system_baseline_in):
     try:
         _validate_facts(baseline_facts)
     except FactValidationError as e:
+        # TODO: (audit-log) failure
         raise HTTPError(HTTPStatus.BAD_REQUEST, message=e.message)
 
     baseline = SystemBaseline(
@@ -333,6 +361,7 @@ def create_baseline(system_baseline_in):
     )
     baseline.baseline_facts = _sort_baseline_facts(baseline.baseline_facts)
     db.session.add(baseline)
+    # TODO: (audit-log) create
     db.session.commit()  # commit now so we get a created/updated time before json conversion
 
     return baseline.to_json()
@@ -348,7 +377,9 @@ def _check_for_existing_display_name(display_name, account_number):
         SystemBaseline.display_name == display_name,
     )
 
+    # TODO: (audit-log) read
     if query.count() > 0:
+        # TODO: (audit-log) failure
         raise HTTPError(
             HTTPStatus.BAD_REQUEST,
             message="display_name '%s' already used for this account" % display_name,
@@ -360,6 +391,7 @@ def _check_for_whitespace_in_display_name(display_name):
     check to see if the display name has leading or trailing whitespace
     """
     if display_name and (not validators.check_whitespace(display_name)):
+        # TODO: (audit-log) failure
         raise HTTPError(
             HTTPStatus.BAD_REQUEST,
             message="baseline name cannot have leading or trailing whitespace",
@@ -408,11 +440,13 @@ def copy_baseline_by_id(baseline_id, display_name):
 
     # ensure display_name is not null
     if not display_name:
+        # TODO: (audit-log) failure
         raise HTTPError(
             HTTPStatus.BAD_REQUEST, message="no value given for display_name"
         )
 
     account_number = view_helpers.get_account_number(request)
+    # TODO: (audit-log) read system_baseline/views/v1.py#_check_for_existing_display_name
     _check_for_existing_display_name(display_name, account_number)
     _check_for_whitespace_in_display_name(display_name)
 
@@ -428,6 +462,7 @@ def copy_baseline_by_id(baseline_id, display_name):
     copy_baseline.modified_on = None
     copy_baseline.display_name = display_name
     db.session.add(copy_baseline)
+    # TODO: (audit-log) create
     db.session.commit()
     return copy_baseline.to_json()
 
@@ -451,6 +486,7 @@ def update_baseline(baseline_id, system_baseline_patch):
     )
 
     if existing_display_name_query.count() > 0:
+        # TODO: (audit-log) failure
         raise HTTPError(
             HTTPStatus.BAD_REQUEST,
             message="display_name '%s' already used for this account"
@@ -460,6 +496,7 @@ def update_baseline(baseline_id, system_baseline_patch):
     query = SystemBaseline.query.filter(
         SystemBaseline.account == account_number, SystemBaseline.id == baseline_id
     )
+    # TODO: (audit-log) read
     baseline = query.first_or_404()
 
     try:
@@ -469,8 +506,10 @@ def update_baseline(baseline_id, system_baseline_patch):
         _validate_facts(updated_facts)
         baseline.baseline_facts = updated_facts
     except FactValidationError as e:
+        # TODO: (audit-log) failure
         raise HTTPError(HTTPStatus.BAD_REQUEST, message=e.message)
     except (jsonpatch.JsonPatchException, jsonpointer.JsonPointerException):
+        # TODO: (audit-log) failure
         raise HTTPError(
             HTTPStatus.BAD_REQUEST, message="unable to apply patch to baseline"
         )
@@ -479,6 +518,7 @@ def update_baseline(baseline_id, system_baseline_patch):
 
     baseline.baseline_facts = _sort_baseline_facts(baseline.baseline_facts)
     db.session.add(baseline)
+    # TODO: (audit-log) update
     db.session.commit()
 
     # pull baseline again so we have the correct updated timestamp and fact count
@@ -502,6 +542,7 @@ def _validate_facts(facts):
 
 @section.before_app_request
 def log_username():
+    # TODO: (audit-log) logon kerlescan/view_helpers.py#log_username
     view_helpers.log_username(current_app.logger, request)
 
 
