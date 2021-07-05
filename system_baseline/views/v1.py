@@ -19,6 +19,7 @@ from system_baseline import metrics, app_config, validators
 from system_baseline.version import app_version
 from system_baseline.models import SystemBaseline, db
 from system_baseline.exceptions import FactValidationError
+from psycopg2.errors import UniqueViolation
 
 section = Blueprint("v1", __name__)
 
@@ -651,6 +652,10 @@ def create_systems_with_baseline(baseline_id, body):
     except ValueError as error:
         message = str(error)
         current_app.logger.audit(message, request=request, success=False)
+        raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
+    except UniqueViolation as error:
+        message = str(error)
+        current_app.logger.audit(message, request=request, sucess=False)
         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
     except Exception:
         message = "Unknown error when creating systems with baseline"
