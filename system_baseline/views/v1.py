@@ -654,7 +654,7 @@ def create_systems_with_baseline(baseline_id, body):
         current_app.logger.audit(message, request=request, success=False)
         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
     except UniqueViolation as error:
-        message = str(error)
+        message = "System already associated with this baseline"
         current_app.logger.audit(message, request=request, sucess=False)
         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
     except Exception:
