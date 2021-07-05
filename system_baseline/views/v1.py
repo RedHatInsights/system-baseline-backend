@@ -19,7 +19,7 @@ from system_baseline import metrics, app_config, validators
 from system_baseline.version import app_version
 from system_baseline.models import SystemBaseline, db
 from system_baseline.exceptions import FactValidationError
-from psycopg2.errors import UniqueViolation
+from sqlalchemy.exc import IntegrityError
 
 section = Blueprint("v1", __name__)
 
@@ -653,7 +653,7 @@ def create_systems_with_baseline(baseline_id, body):
         message = str(error)
         current_app.logger.audit(message, request=request, success=False)
         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
-    except UniqueViolation as error:
+    except IntegrityError as error:
         message = "System already associated with this baseline"
         current_app.logger.audit(message, request=request, sucess=False)
         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
