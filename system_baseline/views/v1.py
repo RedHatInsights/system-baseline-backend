@@ -25,6 +25,7 @@ from system_baseline.global_helpers import (
     ensure_rbac_notifications_read,
     ensure_rbac_notifications_write,
 )
+from sqlalchemy.exc import IntegrityError
 
 section = Blueprint("v1", __name__)
 
@@ -659,6 +660,10 @@ def create_systems_with_baseline(baseline_id, body):
         db.session.commit()
     except ValueError as error:
         message = str(error)
+        current_app.logger.audit(message, request=request, success=False)
+        raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
+    except IntegrityError as error:
+        message = "System(s) already associated with this baseline"
         current_app.logger.audit(message, request=request, success=False)
         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
     except Exception:

@@ -63,6 +63,7 @@ class SystemBaseline(db.Model):
         return json_dict
 
     def add_mapped_system(self, system_id):
+        print("MAPPED SYSTEMS: ", self.mapped_systems)
         new_mapped_system = SystemBaselineMappedSystem(
             system_id=system_id, account=self.account
         )
