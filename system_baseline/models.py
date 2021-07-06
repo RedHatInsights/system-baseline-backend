@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.schema import UniqueConstraint, ForeignKey
 from sqlalchemy.orm import validates, relationship
-
+from sqlalchemy.exc import IntegrityError
 from system_baseline import validators
 
 db = SQLAlchemy()
@@ -61,6 +61,13 @@ class SystemBaseline(db.Model):
         if not withhold_system_ids:
             json_dict["system_ids"] = self.mapped_system_ids()
         return json_dict
+
+    def validate_existing_system(self, system_id):
+        for mapped_system in self.mapped_systems:
+            if system_id == str(mapped_system.system_id):
+                raise ValueError(
+                    "System {} already associated with this baseline".format(system_id)
+                )
 
     def add_mapped_system(self, system_id):
         new_mapped_system = SystemBaselineMappedSystem(
