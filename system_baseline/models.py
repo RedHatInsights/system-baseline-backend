@@ -72,9 +72,7 @@ class SystemBaseline(db.Model):
 
     def add_mapped_system(self, system_id):
         self.validate_existing_system(system_id)
-        new_mapped_system = SystemBaselineMappedSystem(
-            system_id=system_id, account=self.account
-        )
+        new_mapped_system = SystemBaselineMappedSystem(system_id=system_id, account=self.account)
         self.mapped_systems.append(new_mapped_system)
         db.session.add(new_mapped_system)
 

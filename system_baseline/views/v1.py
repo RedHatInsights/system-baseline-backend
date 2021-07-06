@@ -22,7 +22,6 @@ from system_baseline.global_helpers import (
     ensure_rbac_notifications_read,
     ensure_rbac_notifications_write,
 )
-from sqlalchemy.exc import IntegrityError
 from system_baseline.models import SystemBaseline, db
 from system_baseline.version import app_version
 
