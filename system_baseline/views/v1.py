@@ -663,7 +663,7 @@ def create_systems_with_baseline(baseline_id, body):
         current_app.logger.audit(message, request=request, success=False)
         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
     except IntegrityError:
-        message = "System(s) already associated with this baseline"
+        message = "System {} already associated with this baseline".format(system_id)
         current_app.logger.audit(message, request=request, success=False)
         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
     except Exception:
