@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.schema import UniqueConstraint, ForeignKey
 from sqlalchemy.orm import validates, relationship
-from sqlalchemy.exc import IntegrityError
+
 from system_baseline import validators
 
 db = SQLAlchemy()
