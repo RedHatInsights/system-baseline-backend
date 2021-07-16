@@ -9,7 +9,7 @@ from kerlescan.exceptions import HTTPError, ItemNotReturned, RBACDenied
 from kerlescan.hsp_service_interface import fetch_historical_sys_profiles
 from kerlescan.inventory_service_interface import fetch_systems_with_profiles
 from kerlescan.paginate import build_paginated_baseline_list_response
-from kerlescan.service_interface import get_key_from_headers
+from kerlescan.service_interface import get_key_from_headers, internal_auth_header
 from kerlescan.view_helpers import validate_uuids
 from sqlalchemy import func
 from sqlalchemy.orm.session import make_transient
@@ -59,7 +59,13 @@ def get_baselines_by_ids(baseline_ids, limit, offset, order_by, order_how):
     """
     return a list of baselines given their ID
     """
-    ensure_rbac_baselines_read()
+    auth_key = get_key_from_headers(request.headers)
+    internal_call = False
+    if "x-rh-drift-internal-api" in auth_key:
+        if internal_auth_header()["x-rh-drift-internal-api"] == auth_key["x-rh-drift-internal-api"]:
+            internal_call = True
+    if not internal_call:
+        ensure_rbac_baselines_read()
     validate_uuids(baseline_ids)
     if len(set(baseline_ids)) < len(baseline_ids):
         message = "duplicate IDs in request"
