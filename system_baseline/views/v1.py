@@ -92,8 +92,6 @@ def get_baselines_by_ids(baseline_ids, limit, offset, order_by, order_how):
     message = "counted baselines"
     current_app.logger.audit(message, request=request)
 
-    total_available = _get_total_available_baselines()
-
     query = _create_ordering(order_by, order_how, query)
     query = query.limit(limit).offset(offset)
 
@@ -102,20 +100,15 @@ def get_baselines_by_ids(baseline_ids, limit, offset, order_by, order_how):
     message = "read baselines"
     current_app.logger.audit(message, request=request)
 
-    json_list = [baseline.to_json(withhold_facts=False) for baseline in query_results]
-
-    """
-    mapped_systems_count is a list of baseline ids and their associated systems counts.
-    for loop adds mapped system count for each baseline in the list and sets to 0 if none
-    """
-    mapped_systems_count = SystemBaselineMappedSystem.get_mapped_system_count(account_number)
-    for baseline in json_list:
-        baseline["mapped_system_count"] = 0
-        for baseline_count in mapped_systems_count:
-            if baseline["id"] == str(baseline_count[0]):
-                baseline["mapped_system_count"] = baseline_count[1]
-    return build_paginated_baseline_list_response(
-        limit, offset, order_by, order_how, json_list, total_available, count
+    return _baselines_response(
+        query_results,
+        limit,
+        offset,
+        order_by,
+        order_how,
+        count,
+        withhold_facts=False,
+        args_dict={},
     )
 
 
@@ -237,8 +230,6 @@ def get_baselines(limit, offset, order_by, order_how, display_name=None):
     message = "counted baselines"
     current_app.logger.audit(message, request=request)
 
-    total_available = _get_total_available_baselines()
-
     message = "counted total available baselines"
     current_app.logger.audit(message, request=request)
 
@@ -251,7 +242,32 @@ def get_baselines(limit, offset, order_by, order_how, display_name=None):
     message = "read baselines"
     current_app.logger.audit(message, request=request)
 
-    json_list = [baseline.to_json(withhold_facts=True) for baseline in query_results]
+    return _baselines_response(
+        query_results,
+        limit,
+        offset,
+        order_by,
+        order_how,
+        count,
+        withhold_facts=True,
+        args_dict=link_args_dict,
+    )
+
+
+def _baselines_response(
+    query_results,
+    limit,
+    offset,
+    order_by,
+    order_how,
+    count,
+    withhold_facts=True,
+    args_dict={},
+):
+    account_number = view_helpers.get_account_number(request)
+    json_list = [baseline.to_json(withhold_facts=withhold_facts) for baseline in query_results]
+
+    total_available = _get_total_available_baselines()
 
     # DRFT-830
     # temporarily check
@@ -277,7 +293,7 @@ def get_baselines(limit, offset, order_by, order_how, display_name=None):
         json_list,
         total_available,
         count,
-        args_dict=link_args_dict,
+        args_dict=args_dict,
     )
 
 
