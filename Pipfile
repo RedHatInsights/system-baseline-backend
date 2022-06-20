@@ -36,7 +36,7 @@ flask-script = "*"
 flask-migrate = "*"
 bitmath = "*"
 jsonpatch = "*"
-insights-core = "*"
+insights-core = ">=3.0.279"
 kerlescan = {editable = true, ref = "0.93", git = "https://github.com/RedHatInsights/kerlescan.git"}
 app-common-python = "*"
 unleashclient = "*"
