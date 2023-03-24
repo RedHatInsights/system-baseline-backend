@@ -10,7 +10,7 @@ from kerlescan.hsp_service_interface import fetch_historical_sys_profiles
 from kerlescan.inventory_service_interface import fetch_systems_with_profiles
 from kerlescan.paginate import build_paginated_baseline_list_response
 from kerlescan.service_interface import get_key_from_headers
-from kerlescan.view_helpers import validate_uuids
+from kerlescan.view_helpers import validate_uuids, get_account_number, get_org_id
 from sqlalchemy import func
 from sqlalchemy.orm.session import make_transient
 
@@ -36,8 +36,8 @@ def _get_total_available_baselines():
     """
     return a count of total number of baselines available for an account
     """
-    account_number = view_helpers.get_account_number(request)
-    org_id = view_helpers.get_org_id(request)
+    account_number = get_account_number(request)
+    org_id = get_org_id(request)
 
     if org_id:
         query = SystemBaseline.query.filter(SystemBaseline.org_id == org_id)
@@ -46,7 +46,7 @@ def _get_total_available_baselines():
 
     result = query.count()
 
-    message = "counted baselines"
+    message = f"acc number: {account_number} - counted {result} baselines"
     current_app.logger.audit(message, request=request, success=True)
 
     return result
@@ -72,8 +72,8 @@ def get_baselines_by_ids(baseline_ids, limit, offset, order_by, order_how):
         current_app.logger.audit(message, request=request, success=False)
         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
 
-    account_number = view_helpers.get_account_number(request)
-    org_id = view_helpers.get_org_id(request)
+    account_number = get_account_number(request)
+    org_id = get_org_id(request)
 
     if org_id:
         query = SystemBaseline.query.filter(
@@ -91,7 +91,7 @@ def get_baselines_by_ids(baseline_ids, limit, offset, order_by, order_how):
     # is systems are being present in inventory
     check_dirty_baselines(full_results)
 
-    message = "read baselines"
+    message = f"acc number: {account_number} - read baselines"
     current_app.logger.audit(message, request=request)
 
     if len(full_results) < len(baseline_ids):
@@ -107,7 +107,7 @@ def get_baselines_by_ids(baseline_ids, limit, offset, order_by, order_how):
 
     count = query.count()
 
-    message = "counted baselines"
+    message = f"acc number: {account_number} - counted {count} baselines"
     current_app.logger.audit(message, request=request)
 
     total_available = _get_total_available_baselines()
@@ -117,7 +117,7 @@ def get_baselines_by_ids(baseline_ids, limit, offset, order_by, order_how):
 
     query_results = query.all()
 
-    message = "read baselines"
+    message = f"acc number: {account_number} - read baselines"
     current_app.logger.audit(message, request=request)
 
     json_list = [baseline.to_json(withhold_facts=False) for baseline in query_results]
@@ -154,7 +154,8 @@ def delete_baselines_by_ids(baseline_ids):
 
     _delete_baselines(baseline_ids)
 
-    message = "deleted baselines"
+    account_number = get_account_number(request)
+    message = f"acc number: {account_number} - deleted baselines"
     current_app.logger.audit(message, request=request, success=True)
     return "OK"
 
@@ -180,8 +181,8 @@ def _delete_baselines(baseline_ids):
     """
     delete baselines
     """
-    account_number = view_helpers.get_account_number(request)
-    org_id = view_helpers.get_org_id(request)
+    account_number = get_account_number(request)
+    org_id = get_org_id(request)
     if org_id:
         query = SystemBaseline.query.filter(
             SystemBaseline.org_id == org_id, SystemBaseline.id.in_(baseline_ids)
@@ -193,7 +194,7 @@ def _delete_baselines(baseline_ids):
 
     full_results = query.all()
 
-    message = "read baselines"
+    message = f"acc number: {account_number} - read baselines"
     current_app.logger.audit(message, request=request)
 
     if len(full_results) < len(baseline_ids):
@@ -248,8 +249,8 @@ def get_baselines(limit, offset, order_by, order_how, display_name=None):
     if no display_names given, return a list of all baselines for this account
     """
     ensure_rbac_baselines_read()
-    account_number = view_helpers.get_account_number(request)
-    org_id = view_helpers.get_org_id(request)
+    account_number = get_account_number(request)
+    org_id = get_org_id(request)
     if org_id:
         query = SystemBaseline.query.filter(SystemBaseline.org_id == org_id)
     else:
@@ -264,12 +265,12 @@ def get_baselines(limit, offset, order_by, order_how, display_name=None):
 
     count = query.count()
 
-    message = "counted baselines"
+    message = f"acc number: {account_number} - counted {count} baselines"
     current_app.logger.audit(message, request=request)
 
     total_available = _get_total_available_baselines()
 
-    message = "counted total available baselines"
+    message = f"acc number: {account_number} - counted {total_available} total available baselines"
     current_app.logger.audit(message, request=request)
 
     query = _create_ordering(order_by, order_how, query)
@@ -278,7 +279,7 @@ def get_baselines(limit, offset, order_by, order_how, display_name=None):
 
     query_results = query.all()
 
-    message = "read baselines"
+    message = f"acc number: {account_number} - read baselines"
     current_app.logger.audit(message, request=request)
 
     json_list = [baseline.to_json(withhold_facts=True) for baseline in query_results]
@@ -315,14 +316,14 @@ def get_baselines(limit, offset, order_by, order_how, display_name=None):
 
 def check_dirty_baselines(baselines):
     auth_key = get_key_from_headers(request.headers)
-    account_number = view_helpers.get_account_number(request)
-    org_id = view_helpers.get_org_id(request)
+    account_number = get_account_number(request)
+    org_id = get_org_id(request)
     for baseline in baselines:
         if baseline.dirty_systems:
             for system_id in baseline.mapped_system_ids():
                 try:
                     # fetch system from inventory
-                    message = "read system with profiles"
+                    message = f"acc number: {account_number} - read system with profiles"
                     current_app.logger.audit(message, request=request)
                     fetch_systems_with_profiles(
                         [system_id], auth_key, current_app.logger, get_event_counters()
@@ -337,7 +338,7 @@ def check_dirty_baselines(baselines):
                         message = str(error)
                         current_app.logger.audit(message, request=request, success=False)
                     except Exception:
-                        message = "Unknown error when deleting system with baseline"
+                        message = f"acc number: {account_number} - Unknown error when deleting system with baseline"
                         current_app.logger.audit(message, request=request, success=False)
 
             baseline.dirty_systems = False
@@ -402,8 +403,8 @@ def create_baseline(system_baseline_in):
     create a baseline
     """
     ensure_rbac_baselines_write()
-    account_number = view_helpers.get_account_number(request)
-    org_id = view_helpers.get_org_id(request)
+    account_number = get_account_number(request)
+    org_id = get_org_id(request)
 
     if "values" in system_baseline_in and "value" in system_baseline_in:
         message = "'values' and 'value' cannot both be defined for system baseline"
@@ -416,20 +417,20 @@ def create_baseline(system_baseline_in):
     _check_for_existing_display_name(system_baseline_in["display_name"], account_number, org_id)
     _check_for_whitespace_in_display_name(system_baseline_in["display_name"])
 
-    message = "counted baselines"
+    message = f"acc number: {account_number} - counted baselines"
     current_app.logger.audit(message, request=request)
 
     baseline_facts = []
     if "baseline_facts" in system_baseline_in:
         if "inventory_uuid" in system_baseline_in:
-            message = "Both baseline facts and inventory id provided, can clone only one."
+            message = f"acc number: {account_number} - Both baseline facts and inventory id provided, can clone only one."
             current_app.logger.audit(message, request=request, success=False)
             raise HTTPError(
                 HTTPStatus.BAD_REQUEST,
                 message=message,
             )
         if "hsp_uuid" in system_baseline_in:
-            message = "Both baseline facts and hsp id provided, can clone only one."
+            message = f"acc number: {account_number} - Both baseline facts and hsp id provided, can clone only one."
             current_app.logger.audit(message, request=request, success=False)
             raise HTTPError(
                 HTTPStatus.BAD_REQUEST,
@@ -438,7 +439,7 @@ def create_baseline(system_baseline_in):
         baseline_facts = system_baseline_in["baseline_facts"]
     elif "hsp_uuid" in system_baseline_in:
         if "inventory_uuid" in system_baseline_in:
-            message = "Both hsp id and system id provided, can clone only one."
+            message = f"acc number: {account_number} - Both hsp id and system id provided, can clone only one."
             current_app.logger.audit(message, request=request, success=False)
             raise HTTPError(
                 HTTPStatus.BAD_REQUEST,
@@ -453,10 +454,10 @@ def create_baseline(system_baseline_in):
                 current_app.logger,
                 get_event_counters(),
             )[0]
-            message = "read historical system profiles"
+            message = f"acc number: {account_number} - read historical system profiles"
             current_app.logger.audit(message, request=request)
         except ItemNotReturned:
-            message = "hsp UUID %s not available" % system_baseline_in["hsp_uuid"]
+            message = f"hsp UUID {system_baseline_in['hsp_uuid']} not available"
             current_app.logger.audit(message, request=request, success=False)
             raise HTTPError(
                 HTTPStatus.NOT_FOUND,
@@ -481,10 +482,10 @@ def create_baseline(system_baseline_in):
                 current_app.logger,
                 get_event_counters(),
             )[0]
-            message = "read system with profiles"
+            message = f"acc number: {account_number} - read system with profiles"
             current_app.logger.audit(message, request=request)
         except ItemNotReturned:
-            message = "inventory UUID %s not available" % system_baseline_in["inventory_uuid"]
+            message = f"inventory UUID {system_baseline_in['inventory_uuid']} not available"
             current_app.logger.audit(message, request=request, success=False)
             raise HTTPError(
                 HTTPStatus.NOT_FOUND,
@@ -518,7 +519,7 @@ def create_baseline(system_baseline_in):
 
     db.session.commit()  # commit now so we get a created/updated time before json conversion
 
-    message = "create baselines"
+    message = f"acc number: {account_number} - create baselines"
     current_app.logger.audit(message, request=request)
 
     return baseline.to_json(withhold_systems_count=False)
@@ -540,11 +541,11 @@ def _check_for_existing_display_name(display_name, account_number, org_id):
         )
 
     count = query.count()
-    message = "counted baselines"
+    message = f"acc number: {account_number} - counted {count} baselines"
     current_app.logger.audit(message, request=request)
 
     if count > 0:
-        message = "A baseline with this name already exists."
+        message = f"acc number: {account_number} - A baseline with this name already exists."
         current_app.logger.audit(message, request=request, success=False)
         raise HTTPError(
             HTTPStatus.BAD_REQUEST,
@@ -605,13 +606,13 @@ def copy_baseline_by_id(baseline_id, display_name):
         current_app.logger.audit(message, request=request, success=False)
         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
 
-    account_number = view_helpers.get_account_number(request)
-    org_id = view_helpers.get_org_id(request)
+    account_number = get_account_number(request)
+    org_id = get_org_id(request)
 
     _check_for_existing_display_name(display_name, account_number, org_id)
     _check_for_whitespace_in_display_name(display_name)
 
-    message = "counted baselines"
+    message = f"acc number: {account_number} - counted baselines"
     current_app.logger.audit(message, request=request)
 
     if org_id:
@@ -634,7 +635,7 @@ def copy_baseline_by_id(baseline_id, display_name):
 
     db.session.commit()
 
-    message = "created baselines"
+    message = f"acc number: {account_number} - created baselines"
     current_app.logger.audit(message, request=request)
 
     return copy_baseline.to_json(withhold_systems_count=False)
@@ -648,8 +649,8 @@ def update_baseline(baseline_id, system_baseline_patch):
     ensure_rbac_baselines_write()
     validate_uuids([baseline_id])
 
-    account_number = view_helpers.get_account_number(request)
-    org_id = view_helpers.get_org_id(request)
+    account_number = get_account_number(request)
+    org_id = get_org_id(request)
     _check_for_whitespace_in_display_name(system_baseline_patch["display_name"])
 
     # this query is a bit different than what's in _check_for_existing_display_name,
@@ -668,7 +669,7 @@ def update_baseline(baseline_id, system_baseline_patch):
         )
 
     if existing_display_name_query.count() > 0:
-        message = "A baseline with this name already exists."
+        message = f"acc number: {account_number} - A baseline with this name already exists."
         current_app.logger.audit(message, request=request, success=False)
         raise HTTPError(
             HTTPStatus.BAD_REQUEST,
@@ -685,7 +686,7 @@ def update_baseline(baseline_id, system_baseline_patch):
         )
 
     baseline = query.first_or_404()
-    message = "read baselines"
+    message = f"acc number: {account_number} - read baselines"
     current_app.logger.audit(message, request=request)
 
     try:
@@ -711,7 +712,7 @@ def update_baseline(baseline_id, system_baseline_patch):
 
     db.session.commit()
 
-    message = "updated baselines"
+    message = f"acc number: {account_number} - updated baselines"
     current_app.logger.audit(message, request=request)
 
     # pull baseline again so we have the correct updated timestamp and fact count
@@ -730,8 +731,8 @@ def list_systems_with_baseline(baseline_id):
     ensure_rbac_notifications_read()
     ensure_rbac_inventory_read()
     validate_uuids([baseline_id])
-    account_number = view_helpers.get_account_number(request)
-    org_id = view_helpers.get_org_id(request)
+    account_number = get_account_number(request)
+    org_id = get_org_id(request)
 
     if org_id:
         query = SystemBaseline.query.filter(
@@ -748,7 +749,7 @@ def list_systems_with_baseline(baseline_id):
     # is systems are being present in inventory
     check_dirty_baselines([baseline])
 
-    message = "read baseline"
+    message = f"acc number: {account_number} - read baseline"
     current_app.logger.audit(message, request=request, success=True)
 
     try:
@@ -774,8 +775,8 @@ def create_systems_with_baseline(baseline_id, body):
         message = "duplicate IDs in request"
         current_app.logger.audit(message, request=request, success=False)
         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
-    account_number = view_helpers.get_account_number(request)
-    org_id = view_helpers.get_org_id(request)
+    account_number = get_account_number(request)
+    org_id = get_org_id(request)
 
     if org_id:
         query = SystemBaseline.query.filter(
@@ -787,7 +788,7 @@ def create_systems_with_baseline(baseline_id, body):
         )
     baseline = query.first_or_404()
 
-    message = "read baseline"
+    message = f"acc number: {account_number} - read baseline"
     current_app.logger.audit(message, request=request, success=True)
 
     try:
@@ -804,7 +805,7 @@ def create_systems_with_baseline(baseline_id, body):
         current_app.logger.audit(message, request=request, success=False)
         raise
 
-    message = "created systems with baseline"
+    message = f"acc number: {account_number} - created systems with baseline"
     current_app.logger.audit(message, request=request, success=True)
 
     system_ids = baseline.mapped_system_ids()
@@ -819,8 +820,8 @@ def delete_systems_with_baseline(baseline_id, system_ids):
         message = "duplicate IDs in request"
         current_app.logger.audit(message, request=request, success=False)
         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
-    account_number = view_helpers.get_account_number(request)
-    org_id = view_helpers.get_org_id(request)
+    account_number = get_account_number(request)
+    org_id = get_org_id(request)
 
     if org_id:
         query = SystemBaseline.query.filter(
@@ -832,7 +833,7 @@ def delete_systems_with_baseline(baseline_id, system_ids):
         )
     baseline = query.first_or_404()
 
-    message = "read baseline"
+    message = f"acc number: {account_number} - read baseline"
     current_app.logger.audit(message, request=request, success=True)
 
     try:
@@ -848,7 +849,7 @@ def delete_systems_with_baseline(baseline_id, system_ids):
         current_app.logger.audit(message, request=request, success=False)
         raise
 
-    message = "deleted systems with baseline"
+    message = f"acc number: {account_number} - deleted systems with baseline"
     current_app.logger.audit(message, request=request, success=True)
 
     system_ids = baseline.mapped_system_ids()

@@ -10,7 +10,8 @@ global_helpers_bp = Blueprint("global_helpers", __name__)
 @global_helpers_bp.before_app_request
 def log_username():
     view_helpers.log_username(current_app.logger, request)
-    message = "logged username"
+    account_number = view_helpers.get_account_number(request)
+    message = f"acc number: {account_number} - logged username"
     current_app.logger.audit(message, request=request)
 
 

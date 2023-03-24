@@ -23,7 +23,7 @@ def _update_baseline_counts():
     total_baselines = SystemBaseline.query.count()
     total_accounts = SystemBaseline.query.distinct(SystemBaseline.org_id).count()
 
-    message = "counted baselines"
+    message = f"counted {total_baselines} baselines"
     current_app.logger.audit(message, request=request, success=True)
 
     total_accounts_ones = db.engine.execute(RANGES, low=0, high=10).scalar()

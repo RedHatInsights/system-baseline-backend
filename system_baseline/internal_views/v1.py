@@ -45,11 +45,11 @@ def get_baselines_by_system_id(system_id=None):
     try:
         query_results = query.all()
     except Exception:
-        message = "Unknown error when reading baselines by system id"
+        message = f"acc number: {account_number} - Unknown error when reading baselines by system id {system_id}"
         current_app.logger.audit(message, request=request, success=False)
         raise
 
-    message = "read baselines with system"
+    message = f"acc number: {account_number} - read baselines with system"
     current_app.logger.audit(message, request=request, success=True)
 
     return [result.system_baseline_id for result in query_results]
@@ -67,11 +67,11 @@ def delete_systems_by_ids(system_ids):
     try:
         SystemBaselineMappedSystem.delete_by_system_ids(system_ids, account_number, org_id)
     except Exception:
-        message = "Unknown error when deleting systems by ids"
+        message = f"acc number: {account_number} - Unknown error when deleting systems by ids {system_ids}"
         current_app.logger.audit(message, request=request, success=False)
         raise
 
-    message = "delete systems by ids"
+    message = f"acc number: {account_number} - delete systems by ids {system_ids}"
     current_app.logger.audit(message, request=request, success=True)
 
     return "OK"
