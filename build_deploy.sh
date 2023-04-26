@@ -38,7 +38,7 @@ else
     podman build -t "${IMAGE_NAME}:${IMAGE_TAG}" .
     podman push "${IMAGE_NAME}:${IMAGE_TAG}"
 
-    if [[ $GIT_BRANCH == *"security-compliance"*]]; then
+    if [[ $GIT_BRANCH == *"security-compliance"* ]]; then
         podman tag "${IMAGE}:${IMAGE_TAG}" "${IMAGE}:security-compliance"
         podman push "${IMAGE}:security-compliance"
     else
