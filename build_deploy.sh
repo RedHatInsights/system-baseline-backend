@@ -39,8 +39,8 @@ else
     podman push "${IMAGE_NAME}:${IMAGE_TAG}"
 
     if [[ $GIT_BRANCH == *"security-compliance"* ]]; then
-        podman tag "${IMAGE}:${IMAGE_TAG}" "${IMAGE}:security-compliance"
-        podman push "${IMAGE}:security-compliance"
+        podman tag "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_NAME}:security-compliance"
+        podman push "${IMAGE_NAME}:security-compliance"
     else
         for TAG in "latest" "qa"; do
             podman tag "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_NAME}:$TAG"
