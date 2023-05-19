@@ -65,7 +65,7 @@ kerlescan = {git = "https://github.com/RedHatInsights/kerlescan.git", rev = "0.1
 app-common-python = "*"
 unleashclient = "*"
 jsonschema = "==3.2.0"
-markupsafe = "==2.0.1"
+markupsafe = "==2.1.2"
 psycopg2 = "*"
 
 
