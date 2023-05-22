@@ -496,31 +496,34 @@ files = [
 
 [[package]]
 name = "connexion"
-version = "2.5.1"
+version = "2.14.2"
 description = "Connexion - API first applications with OpenAPI/Swagger and Flask"
 category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "connexion-2.5.1-py2.py3-none-any.whl", hash = "sha256:3f6c2cb8a3f24af281ff561eebaaa926700b24f4c430f4d945c8ace0384c220c"},
-    {file = "connexion-2.5.1.tar.gz", hash = "sha256:56854c65334281b303120a1097df09a79ffa44bdaecfc4400e7194821e17566d"},
+    {file = "connexion-2.14.2-py2.py3-none-any.whl", hash = "sha256:a73b96a0e07b16979a42cde7c7e26afe8548099e352cf350f80c57185e0e0b36"},
+    {file = "connexion-2.14.2.tar.gz", hash = "sha256:dbc06f52ebeebcf045c9904d570f24377e8bbd5a6521caef15a06f634cf85646"},
 ]
 
 [package.dependencies]
-clickclick = ">=1.2"
-flask = ">=1.0.4"
-inflection = ">=0.3.1"
-jsonschema = ">=2.5.1"
-openapi-spec-validator = ">=0.2.4"
-PyYAML = ">=5.1"
-requests = ">=2.9.1"
-swagger-ui-bundle = {version = ">=0.0.2", optional = true, markers = "extra == \"swagger-ui\""}
+clickclick = ">=1.2,<21"
+flask = ">=1.0.4,<2.3"
+inflection = ">=0.3.1,<0.6"
+itsdangerous = ">=0.24"
+jsonschema = ">=2.5.1,<5"
+packaging = ">=20"
+PyYAML = ">=5.1,<7"
+requests = ">=2.9.1,<3"
+swagger-ui-bundle = {version = ">=0.0.2,<0.1", optional = true, markers = "extra == \"swagger-ui\""}
+werkzeug = ">=1.0,<2.3"
 
 [package.extras]
-aiohttp = ["aiohttp (>=2.3.10)", "aiohttp-jinja2 (>=0.14.0)"]
-flask = ["flask (>=1.0.4)"]
-swagger-ui = ["swagger-ui-bundle (>=0.0.2)"]
-tests = ["aiohttp (>=2.3.10)", "aiohttp-jinja2 (>=0.14.0)", "aiohttp-remotes", "decorator", "flask (>=1.0.4)", "mock", "pytest", "pytest-aiohttp", "pytest-cov", "swagger-ui-bundle (>=0.0.2)", "testfixtures"]
+aiohttp = ["MarkupSafe (>=0.23)", "aiohttp (>=2.3.10,<4)", "aiohttp-jinja2 (>=0.14.0,<2)"]
+docs = ["sphinx-autoapi (==1.8.1)"]
+flask = ["flask (>=1.0.4,<2.3)", "itsdangerous (>=0.24)"]
+swagger-ui = ["swagger-ui-bundle (>=0.0.2,<0.1)"]
+tests = ["MarkupSafe (>=0.23)", "aiohttp (>=2.3.10,<4)", "aiohttp-jinja2 (>=0.14.0,<2)", "aiohttp-remotes", "decorator (>=5,<6)", "flask (>=1.0.4,<2.3)", "itsdangerous (>=0.24)", "pytest (>=6,<7)", "pytest-aiohttp", "pytest-cov (>=2,<3)", "swagger-ui-bundle (>=0.0.2,<0.1)", "testfixtures (>=6,<7)"]
 
 [[package]]
 name = "coverage"
@@ -1595,7 +1598,7 @@ files = [
 name = "openapi-schema-validator"
 version = "0.2.3"
 description = "OpenAPI schema validation for Python"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7.0,<4.0.0"
 files = [
@@ -1615,7 +1618,7 @@ strict-rfc3339 = ["strict-rfc3339"]
 name = "openapi-spec-validator"
 version = "0.4.0"
 description = "OpenAPI 2.0 (aka Swagger) and OpenAPI 3.0 spec validator"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7.0,<4.0.0"
 files = [
@@ -1636,7 +1639,7 @@ requests = ["requests"]
 name = "packaging"
 version = "23.0"
 description = "Core utilities for Python packages"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -2859,4 +2862,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "0de870bbb5acddc02a23156c7bc849957e3ec72aafbc31e1d79620b1f69c03ac"
+content-hash = "d81006b6c79ceb4ef7fbb5899850ddbc8bd669794acc511223337ecb66930a4e"

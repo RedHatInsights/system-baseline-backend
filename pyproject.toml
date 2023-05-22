@@ -47,7 +47,7 @@ packages = []
 
 [tool.poetry.dependencies]
 python = "^3.9"
-connexion = {extras = ["swagger-ui"], version = "==2.5.1"}
+connexion = {extras = ["swagger-ui"], version = "==2.14.2"}
 Flask = "==1.1.4"
 gunicorn = "*"
 prometheus_client = "*"
