@@ -27,6 +27,12 @@ COPY . ${APP_ROOT}/src
 
 WORKDIR ${APP_ROOT}/src
 
+RUN microdnf install --setopt=install_weak_deps=0 --setopt=tsflags=nodocs -y \
+    git-core python39 python39-pip tzdata libpq-devel && \
+    rpm -qa | sort > packages-before-devel-install.txt && \
+    microdnf install --setopt=tsflags=nodocs -y python39-devel gcc && \
+    rpm -qa | sort > packages-after-devel-install.txt
+
 RUN pip3 install --upgrade pip && \
     pip3 install --force-reinstall poetry~=1.5.0 && \
     poetry install --sync
