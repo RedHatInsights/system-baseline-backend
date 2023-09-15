@@ -851,6 +851,7 @@ files = [
 [package.dependencies]
 cachecontrol = [
     {version = "*"},
+    {version = "*", extras = ["filecache"]},
     {version = "*", extras = ["redis"]},
     {version = "*", extras = ["filecache"]},
 ]
