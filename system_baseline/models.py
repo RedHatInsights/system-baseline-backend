@@ -51,9 +51,11 @@ class SystemBaseline(db.Model):
     @staticmethod
     def get_groups_query_filters(filters):
         return [
-            SystemBaselineMappedSystem.groups == "[]"
-            if "id" in filter and filter["id"] is None
-            else SystemBaselineMappedSystem.groups.contains(cast([filter], JSONB))
+            (
+                SystemBaselineMappedSystem.groups == "[]"
+                if "id" in filter and filter["id"] is None
+                else SystemBaselineMappedSystem.groups.contains(cast([filter], JSONB))
+            )
             for filter in filters
         ]
 
