@@ -69,6 +69,6 @@ jobs:
       - name: Validate OpenAPI api spec using openapi-generator-cli
         run:  java -jar openapi-generator-cli-4.1.1.jar validate -i system_baseline/openapi/api.spec.yaml
       - name: Upload Code Coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           verbose: true
