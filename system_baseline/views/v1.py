@@ -644,7 +644,7 @@ def update_baseline(baseline_id, system_baseline_patch):
     """
     update a baseline
     """
-    current_app.logger.error(system_baseline_patch)
+    current_app.logger.info(system_baseline_patch)
     ensure_rbac_baselines_write()
     validate_uuids([baseline_id])
 
