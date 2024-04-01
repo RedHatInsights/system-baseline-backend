@@ -29,7 +29,7 @@ source .bonfire_venv/bin/activate
 # run unit tests in containers
 DB_CONTAINER_NAME="baseline-db-${IMAGE_TAG}"
 NETWORK="baseline-test-${IMAGE_TAG}"
-POSTGRES_IMAGE="quay.io/cloudservices/postgresql-rds:cyndi-13-1"
+POSTGRES_IMAGE="quay.io/cloudservices/postgresql-rds:cyndi-13"
 
 function teardown_docker {
 	docker rm -f $DB_CONTAINER_ID || true
