@@ -177,6 +177,37 @@ objects:
               SB.ID as BASELINE_ID,
               SBMS.SYSTEM_ID::TEXT AS ASSOCIATED_SYSTEM_ID FROM SYSTEM_BASELINES SB
               LEFT OUTER JOIN SYSTEM_BASELINE_MAPPED_SYSTEMS SBMS ON SBMS.SYSTEM_BASELINE_ID  = SB.ID;
+  - apiVersion: metrics.console.redhat.com/v1alpha1
+    kind: FloorPlan
+    metadata:
+      name: system-baseline-hms
+    spec:
+      database:
+        secretName: ${FLOORIST_DB_SECRET_NAME}
+      objectStore:
+        secretName: ${FLOORIST_HMS_BUCKET_SECRET_NAME}
+      suspend: ${{FLOORIST_SUSPEND}}
+      logLevel: ${FLOORIST_LOGLEVEL}
+      queries:
+        - prefix: hms_analytics/drift/baselines
+          query: >-
+            SELECT
+              SB.ACCOUNT AS ACCOUNT_ID,
+              SB.ID AS BASELINE_ID,
+              SB.ORG_ID,
+              SB.CREATED_ON,
+              SB.MODIFIED_ON,
+              SB.NOTIFICATIONS_ENABLED,
+              JSON_AGG(SBMS.SYSTEM_ID) AS ASSOCIATED_SYSTEM_IDS
+            FROM 
+              SYSTEM_BASELINES SB
+            LEFT OUTER JOIN 
+              SYSTEM_BASELINE_MAPPED_SYSTEMS SBMS
+            ON 
+              SBMS.SYSTEM_BASELINE_ID  = SB.ID
+            GROUP BY
+              SB.ID;
+
 parameters:
   - name: DRIFT_ENABLE_RBAC
     description: enable rbac. needs to be "True" or "False".
@@ -215,6 +246,9 @@ parameters:
     name: FLOORIST_BUCKET_SECRET_NAME
     required: true
     value: dummy-secret
+  - name: FLOORIST_HMS_BUCKET_SECRET_NAME
+    description: HMS bucket secret name
+    value: floorist-bucket
   - description: database secret name
     name: FLOORIST_DB_SECRET_NAME
     value: system-baseline-db
