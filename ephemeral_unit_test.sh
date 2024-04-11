@@ -10,7 +10,7 @@ echo '===================================='
 #Start Python venv
 python3.8 -m venv venv
 source venv/bin/activate
-pip install --upgrade pip setuptools poetry
+pip install --upgrade pip setuptools
 pip install pre-commit
 set +e
 pre-commit run --all-files
@@ -22,6 +22,8 @@ if [ $TEST_RESULT -ne 0 ]; then
 	echo '====================================='
 	exit 1
 fi
+
+pip install --force-reinstall poetry~=1.8.2
 
 # Move back out of the pre-commit virtual env
 source .bonfire_venv/bin/activate
@@ -83,7 +85,7 @@ echo '===================================='
 echo '=== Installing Pip Dependencies ===='
 echo '===================================='
 set +e
-docker exec $TEST_CONTAINER_ID /bin/bash -c 'poetry install --with dev'
+docker exec $TEST_CONTAINER_ID /bin/bash -c 'poetry install --with dev --sync --no-root'
 TEST_RESULT=$?
 set -e
 
