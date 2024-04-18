@@ -198,7 +198,7 @@ objects:
               SB.CREATED_ON,
               SB.MODIFIED_ON,
               SB.NOTIFICATIONS_ENABLED,
-              JSON_AGG(SBMS.SYSTEM_ID) AS ASSOCIATED_SYSTEM_IDS
+              JSON_AGG(SBMS.SYSTEM_ID::TEXT) AS ASSOCIATED_SYSTEM_IDS
             FROM 
               SYSTEM_BASELINES SB
             LEFT OUTER JOIN 
