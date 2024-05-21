@@ -1,7 +1,6 @@
 import logging
 
-import connexion
-
+from connexion import FlaskApp
 from flask_migrate import Migrate
 from kerlescan import config
 from kerlescan.audit_logging import setup_audit_logging
@@ -29,14 +28,21 @@ def create_app():
 
 def create_connexion_app():
     openapi_args = {
-        "path_prefix": config.path_prefix,
-        "app_name": app_config.get_app_name(),
+        "path_prefix": config.path_prefix.strip("/"),
+        "app_name": app_config.get_app_name().strip("/"),
     }
-    connexion_app = connexion.App(__name__, specification_dir="openapi/", arguments=openapi_args)
-    connexion_app.add_api("api.spec.yaml", strict_validation=True, validate_responses=True)
-    connexion_app.add_api("internal_api.spec.yaml", strict_validation=True, validate_responses=True)
-    connexion_app.add_api("mgmt_api.spec.yaml", strict_validation=True)
-    connexion_app.add_api("admin_api.spec.yaml", strict_validation=True)
+    connexion_app = FlaskApp(__name__, specification_dir="openapi/")
+    connexion_app.add_api(
+        "api.spec.yaml", arguments=openapi_args, strict_validation=True, validate_responses=True
+    )
+    connexion_app.add_api(
+        "internal_api.spec.yaml",
+        arguments=openapi_args,
+        strict_validation=True,
+        validate_responses=True,
+    )
+    connexion_app.add_api("mgmt_api.spec.yaml", arguments=openapi_args, strict_validation=True)
+    connexion_app.add_api("admin_api.spec.yaml", arguments=openapi_args, strict_validation=True)
     flask_app = connexion_app.app
 
     # set up logging ASAP
@@ -45,7 +51,10 @@ def create_connexion_app():
     flask_app.logger.handlers = gunicorn_logger.handlers
     flask_app.logger.setLevel(gunicorn_logger.level)
     setup_cw_logging(flask_app.logger, logging.getLogger("gunicorn.access"), gunicorn_logger)
+
     register_hsts_response(flask_app)
+
+    connexion_app.add_error_handler(HTTPError, handle_http_error)
 
     # set up DB
     flask_app.config["SQLALCHEMY_ECHO"] = False
@@ -58,7 +67,7 @@ def create_connexion_app():
     flask_app.register_blueprint(v1_bp)
     flask_app.register_blueprint(internal_v1_bp)
     flask_app.register_blueprint(global_helpers_bp)
-    flask_app.register_error_handler(HTTPError, handle_http_error)
+
     return connexion_app
 
 
