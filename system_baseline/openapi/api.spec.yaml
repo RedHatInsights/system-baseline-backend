@@ -9,7 +9,7 @@ info:
     url: https://www.apache.org/licenses/LICENSE-2.0.html
 
 servers:
-  - url: "{{ path_prefix }}{{ app_name }}/v1"
+  - url: "/{{ path_prefix }}/{{ app_name }}/v1"
 
 paths:
   /version:
@@ -54,11 +54,11 @@ paths:
       operationId: system_baseline.views.v1.create_baseline
       requestBody:
         required: true
+        x-body-name: system_baseline_in
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/BaselineIn"
-              x-body-name: system_baseline_in
       responses:
         '200':
           description: a created baseline object
@@ -147,10 +147,10 @@ paths:
       operationId: system_baseline.views.v1.update_baseline
       requestBody:
         required: true
+        x-body-name: system_baseline_patch
         content:
           application/json:
             schema:
-              x-body-name: system_baseline_patch
               type: object
               required:
                 - display_name

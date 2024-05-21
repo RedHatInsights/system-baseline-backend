@@ -25,7 +25,7 @@ if [ -z "$ACG_CONFIG" ]; then
     then GUNICORN_REQUEST_FIELD_LIMIT=16380
   fi
 
-  prometheus_multiproc_dir=$TEMPDIR gunicorn wsgi -w $NUM_WORKERS --threads $THREADS -b 0.0.0.0:$PORT --log-level=$LOG_LEVEL --access-logfile=- --limit-request-field_size=$GUNICORN_REQUEST_FIELD_LIMIT --config ./gunicorn.conf.py
+  prometheus_multiproc_dir=$TEMPDIR gunicorn wsgi --worker-class uvicorn.workers.UvicornWorker -w $NUM_WORKERS --threads $THREADS -b 0.0.0.0:$PORT --log-level=$LOG_LEVEL --access-logfile=- --limit-request-field_size=$GUNICORN_REQUEST_FIELD_LIMIT --config ./gunicorn.conf.py
 
   rm -rf $TEMPDIR
 else
@@ -37,5 +37,5 @@ else
   APP_CONFIG='gunicorn.conf.py'
   FLASK_APP=system_baseline.app:get_flask_app_with_migration flask db upgrade;
   if [[ "$?" != "0" ]]; then exit 1; fi
-  exec gunicorn wsgi --bind=0.0.0.0:$PORT --bind=0.0.0.0:$METRICS_PORT --access-logfile=- --limit-request-field_size=$GUNICORN_REQUEST_FIELD_LIMIT --config "$APP_CONFIG"
+  exec gunicorn wsgi --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:$PORT --bind=0.0.0.0:$METRICS_PORT --access-logfile=- --limit-request-field_size=$GUNICORN_REQUEST_FIELD_LIMIT --config "$APP_CONFIG"
 fi

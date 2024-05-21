@@ -17,8 +17,7 @@ class GlobalHelpersApiTest(unittest.TestCase):
         patched_rbac.return_value = None  # validate all RBAC requests
         self.addCleanup(self.stopPatches)
         test_connexion_app = app.create_app()
-        test_flask_app = test_connexion_app.app
-        self.client = test_flask_app.test_client()
+        self.client = test_connexion_app.test_client
 
     def stopPatches(self):
         self.rbac_patcher.stop()
@@ -29,6 +28,7 @@ class GlobalHelpersEnsureOrgIdTest(GlobalHelpersApiTest):
     def test_calls_kerlescan_view_helpers_ensure_org_id_is_called(
         self, mocked_kerlescan_ensure_method
     ):
-        response = self.client.get("api/system-baseline/v1/baselines", headers=fixtures.AUTH_HEADER)
-        mocked_kerlescan_ensure_method.assert_called_once()
+        with self.client() as client:
+            response = client.get("api/system-baseline/v1/baselines", headers=fixtures.AUTH_HEADER)
+            mocked_kerlescan_ensure_method.assert_called_once()
         self.assertEqual(response.status_code, 200)

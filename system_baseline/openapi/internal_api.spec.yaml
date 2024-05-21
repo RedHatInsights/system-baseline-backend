@@ -9,7 +9,7 @@ info:
     url: https://www.apache.org/licenses/LICENSE-2.0.html
 
 servers:
-  - url: "{{ path_prefix }}{{ app_name }}/internal/v1"
+  - url: "/{{ path_prefix }}/{{ app_name }}/internal/v1"
 
 paths:
   /version:
@@ -53,10 +53,10 @@ paths:
       operationId: system_baseline.internal_views.v1.update_system
       requestBody:
         required: true
+        x-body-name: system_patch
         content:
           application/json:
             schema:
-              x-body-name: system_patch
               type: object
               x-nullable: true
               properties:
