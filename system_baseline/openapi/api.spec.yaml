@@ -443,8 +443,10 @@ components:
           $ref: "#/components/schemas/DisplayName"
         inventory_uuid:
           type: string
+          format: uuid
         hsp_uuid:
           type: string
+          format: uuid
         baseline_facts:
           type: array
           items:
@@ -459,6 +461,7 @@ components:
           type: array
           items:
             type: string
+            format: uuid
             minLength: 32
             maxLength: 36
     SystemIdsList:
@@ -574,12 +577,14 @@ components:
         type: array
         items:
           type: string
+          format: uuid
     BaselineId:
       in: path
       name: baseline_id
       required: true
       schema:
         type: string
+        format: uuid
     SystemIds:
       in: path
       name: system_ids
@@ -588,3 +593,4 @@ components:
         type: array
         items:
           type: string
+          format: uuid
