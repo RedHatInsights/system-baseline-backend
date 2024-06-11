@@ -336,6 +336,54 @@ class ApiGeneralTests(ApiTest):
         self.assertEqual(result["meta"]["count"], 1)
 
 
+class ApiErrorHTTPTests(ApiTest):
+    def setUp(self):
+        super(ApiErrorHTTPTests, self).setUp()
+
+    def tearDown(self):
+        super(ApiErrorHTTPTests, self).tearDown()
+
+    def test_baselines_wrong_url(self):
+        api_endpoints = [
+            ("/baseline", ["GET", "POST", "PATCH"], [404, 404, 404]),
+            ("/baselines/", ["GET", "POST", "PATCH"], [404, 404, 404]),
+            ("/!baselines", ["GET", "POST", "PATCH"], [404, 404, 404]),
+            ("/?baselines", ["GET", "POST", "PATCH"], [404, 404, 404]),
+            ("/{baselines}", ["GET", "POST", "PATCH"], [404, 404, 404]),
+            ("/-baselines", ["GET", "POST", "PATCH"], [404, 404, 404]),
+            ("/baselines-", ["GET", "POST", "PATCH"], [404, 404, 404]),
+            ("/&baselines-", ["GET", "POST", "PATCH"], [404, 404, 404]),
+            ("/~baselines", ["GET", "POST", "PATCH"], [404, 404, 404]),
+            (
+                "/baselines/?ed877dfc-14e9-4ccf-ba3d-68d9ff346457",
+                ["GET", "POST", "PATCH"],
+                [404, 404, 404],
+            ),
+            (
+                "/baselines/#ed877dfc-14e9-4ccf-ba3d-68d9ff346457",
+                ["GET", "POST", "PATCH"],
+                [404, 404, 404],
+            ),
+        ]
+
+        for api_endpoint in api_endpoints:
+            endpoint = api_endpoint[0]
+            http_methods = api_endpoint[1]
+            expected_status_codes = api_endpoint[2]
+
+            for http_method in http_methods:
+                expected_status_code = expected_status_codes.pop(0)
+                with self.subTest(
+                    endpoint=endpoint, method=http_method, expected_status_code=expected_status_code
+                ):
+                    response = self.client.open(
+                        f"api/system-baseline/v1{endpoint}",
+                        method=http_method,
+                        headers=fixtures.AUTH_HEADER,
+                    )
+                    self.assertEqual(response.status_code, expected_status_code)
+
+
 class CopyBaselineTests(ApiTest):
     def setUp(self):
         super(CopyBaselineTests, self).setUp()
