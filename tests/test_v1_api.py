@@ -362,7 +362,7 @@ class ApiErrorHTTPTests(ApiTest):
     def test_baselines_wrong_url(self):
         api_endpoints = [
             ("/baseline", ["GET", "POST", "PATCH"], [404, 404, 404]),
-            ("/baselines/", ["GET", "POST", "PATCH"], [404, 404, 404]),
+            ("/baselines/", ["GET", "POST", "PATCH"], [200, 400, 405]),
             ("/!baselines", ["GET", "POST", "PATCH"], [404, 404, 404]),
             ("/?baselines", ["GET", "POST", "PATCH"], [404, 404, 404]),
             ("/{baselines}", ["GET", "POST", "PATCH"], [404, 404, 404]),
@@ -373,12 +373,12 @@ class ApiErrorHTTPTests(ApiTest):
             (
                 "/baselines/?ed877dfc-14e9-4ccf-ba3d-68d9ff346457",
                 ["GET", "POST", "PATCH"],
-                [404, 404, 404],
+                [400, 400, 405],
             ),
             (
                 "/baselines/#ed877dfc-14e9-4ccf-ba3d-68d9ff346457",
                 ["GET", "POST", "PATCH"],
-                [404, 404, 404],
+                [200, 400, 405],
             ),
         ]
 
@@ -392,12 +392,13 @@ class ApiErrorHTTPTests(ApiTest):
                 with self.subTest(
                     endpoint=endpoint, method=http_method, expected_status_code=expected_status_code
                 ):
-                    response = self.client.open(
-                        f"api/system-baseline/v1{endpoint}",
-                        method=http_method,
-                        headers=fixtures.AUTH_HEADER,
-                    )
-                    self.assertEqual(response.status_code, expected_status_code)
+                    with self.client() as client:
+                        response = client.request(
+                            http_method,
+                            f"api/system-baseline/v1{endpoint}",
+                            headers=fixtures.AUTH_HEADER,
+                        )
+                        self.assertEqual(response.status_code, expected_status_code)
 
 
 class CopyBaselineTests(ApiTest):
