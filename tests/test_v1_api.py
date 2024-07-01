@@ -361,24 +361,24 @@ class ApiErrorHTTPTests(ApiTest):
 
     def test_baselines_wrong_url(self):
         api_endpoints = [
-            ("/baseline", ["GET", "POST", "PATCH"], [404, 404, 404]),
-            ("/baselines/", ["GET", "POST", "PATCH"], [200, 400, 405]),
-            ("/!baselines", ["GET", "POST", "PATCH"], [404, 404, 404]),
-            ("/?baselines", ["GET", "POST", "PATCH"], [404, 404, 404]),
-            ("/{baselines}", ["GET", "POST", "PATCH"], [404, 404, 404]),
-            ("/-baselines", ["GET", "POST", "PATCH"], [404, 404, 404]),
-            ("/baselines-", ["GET", "POST", "PATCH"], [404, 404, 404]),
-            ("/&baselines-", ["GET", "POST", "PATCH"], [404, 404, 404]),
-            ("/~baselines", ["GET", "POST", "PATCH"], [404, 404, 404]),
+            ("/baseline", ["GET", "POST", "PATCH", "DELETE"], [404, 404, 404, 404]),
+            ("/baselines/", ["GET", "POST", "PATCH", "DELETE"], [200, 400, 405, 405]),
+            ("/!baselines", ["GET", "POST", "PATCH", "DELETE"], [404, 404, 404, 404]),
+            ("/?baselines", ["GET", "POST", "PATCH", "DELETE"], [404, 404, 404, 404]),
+            ("/{baselines}", ["GET", "POST", "PATCH", "DELETE"], [404, 404, 404, 404]),
+            ("/-baselines", ["GET", "POST", "PATCH", "DELETE"], [404, 404, 404, 404]),
+            ("/baselines-", ["GET", "POST", "PATCH", "DELETE"], [404, 404, 404, 404]),
+            ("/&baselines-", ["GET", "POST", "PATCH", "DELETE"], [404, 404, 404, 404]),
+            ("/~baselines", ["GET", "POST", "PATCH", "DELETE"], [404, 404, 404, 404]),
             (
                 "/baselines/?ed877dfc-14e9-4ccf-ba3d-68d9ff346457",
-                ["GET", "POST", "PATCH"],
-                [400, 400, 405],
+                ["GET", "POST", "PATCH", "DELETE"],
+                [400, 400, 405, 405],
             ),
             (
                 "/baselines/#ed877dfc-14e9-4ccf-ba3d-68d9ff346457",
-                ["GET", "POST", "PATCH"],
-                [200, 400, 405],
+                ["GET", "POST", "PATCH", "DELETE"],
+                [200, 400, 405, 405],
             ),
         ]
 
