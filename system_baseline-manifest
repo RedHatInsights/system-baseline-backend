@@ -1,5 +1,5 @@
 services-drift:system_baseline/python:3.9=a2wsgi:1.10.4
-services-drift:system_baseline/python:3.9=alembic:1.13.1
+services-drift:system_baseline/python:3.9=alembic:1.13.2
 services-drift:system_baseline/python:3.9=anyio:4.4.0
 services-drift:system_baseline/python:3.9=app-common-python:0.2.7
 services-drift:system_baseline/python:3.9=appdirs:1.4.4
