@@ -18,6 +18,10 @@ IQE_CJI_TIMEOUT="30m"
 # Install bonfire repo/initialize
 CICD_URL=https://raw.githubusercontent.com/RedHatInsights/bonfire/master/cicd
 curl -s $CICD_URL/bootstrap.sh > .cicd_bootstrap.sh && source .cicd_bootstrap.sh
+
+# temporary to test bonfire updates
+pip install --pre --upgrade crc-bonfire
+
 source $CICD_ROOT/build.sh
 # source $APP_ROOT/ephemeral_unit_test.sh
 source $APP_ROOT/baseline_deploy_ephemeral_env.sh
