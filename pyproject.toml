@@ -56,8 +56,9 @@ alembic = "*"
 flask-script = "*"
 flask-migrate = "*"
 jsonpatch = "*"
-kerlescan = {git = "https://github.com/RedHatInsights/kerlescan.git", rev = "0.119", develop = true}
+kerlescan = {git = "https://github.com/RedHatInsights/kerlescan.git", rev = "0.120", develop = true}
 psycopg2 = "*"
+uvicorn = "*"
 
 
 [tool.poetry.group.dev.dependencies]
