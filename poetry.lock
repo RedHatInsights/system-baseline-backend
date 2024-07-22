@@ -1881,13 +1881,13 @@ dev = ["pre-commit", "pytest-asyncio", "tox"]
 
 [[package]]
 name = "pytest-subtests"
-version = "0.12.1"
+version = "0.13.1"
 description = "unittest subTest() support and subtests fixture"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pytest-subtests-0.12.1.tar.gz", hash = "sha256:d6605dcb88647e0b7c1889d027f8ef1c17d7a2c60927ebfdc09c7b0d8120476d"},
-    {file = "pytest_subtests-0.12.1-py3-none-any.whl", hash = "sha256:100d9f7eb966fc98efba7026c802812ae327e8b5b37181fb260a2ea93226495c"},
+    {file = "pytest_subtests-0.13.1-py3-none-any.whl", hash = "sha256:ab616a22f64cd17c1aee65f18af94dbc30c444f8683de2b30895c3778265e3bd"},
+    {file = "pytest_subtests-0.13.1.tar.gz", hash = "sha256:989e38f0f1c01bc7c6b2e04db7d9fd859db35d77c2c1a430c831a70cbf3fde2d"},
 ]
 
 [package.dependencies]
