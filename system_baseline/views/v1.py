@@ -401,6 +401,8 @@ def create_baseline(system_baseline_in):
     """
     create a baseline
     """
+
+    raise HTTPError(HTTPStatus.METHOD_NOT_ALLOWED, "")
     ensure_rbac_baselines_write()
     account_number = view_helpers.get_account_number(request)
     org_id = view_helpers.get_org_id(request)
@@ -644,6 +646,8 @@ def update_baseline(baseline_id, system_baseline_patch):
     """
     update a baseline
     """
+    raise HTTPError(HTTPStatus.METHOD_NOT_ALLOWED, "")
+
     current_app.logger.info(system_baseline_patch)
     ensure_rbac_baselines_write()
     validate_uuids([baseline_id])
@@ -784,6 +788,8 @@ def _filter_inventory_groups_data(groups):
 
 
 def create_systems_with_baseline(baseline_id, body):
+    raise HTTPError(HTTPStatus.METHOD_NOT_ALLOWED, "")
+
     ensure_rbac_notifications_write()
     validate_uuids([baseline_id])
     system_ids = body["system_ids"]
