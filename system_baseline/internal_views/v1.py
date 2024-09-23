@@ -1,5 +1,8 @@
+from http import HTTPStatus
+
 from flask import Blueprint, abort, current_app, request
 from kerlescan import view_helpers
+from kerlescan.exceptions import HTTPError
 from kerlescan.view_helpers import validate_uuids
 
 from system_baseline import metrics
@@ -83,11 +86,18 @@ def create_systems_deletion_request(body):
     """
     delete a list of systems given their system IDs as a list
     """
+    raise HTTPError(
+        HTTPStatus.METHOD_NOT_ALLOWED, message="Write permission decommissioned on Sep. 30,, 2024."
+    )
     system_ids = body["system_ids"]
     return delete_systems_by_ids(system_ids)
 
 
 def update_system(system_id, system_patch):
+    raise HTTPError(
+        HTTPStatus.METHOD_NOT_ALLOWED, message="Write permission decommissioned on Sep. 30,, 2024."
+    )
+
     if system_patch:
         groups = system_patch.get("groups", [])
     else:

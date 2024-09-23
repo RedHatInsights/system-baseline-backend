@@ -1,5 +1,8 @@
+from http import HTTPStatus
+
 from flask import Blueprint, current_app, g, request
 from kerlescan import view_helpers
+from kerlescan.exceptions import HTTPError
 
 from system_baseline import app_config, metrics
 
@@ -57,6 +60,11 @@ def ensure_rbac_baselines_write():
     # permissions=[["drift:*:*"], ["drift:notifications:read", "drift:baselines:read"]]
     # If we just have *:*, it works, but if not, we need both notifications:read and
     # baselines:read in order to allow access.
+
+    raise HTTPError(
+        HTTPStatus.METHOD_NOT_ALLOWED, message="Write permission decommissioned on Sep. 30,, 2024."
+    )
+
     if g.get("rbac_filters") is None:
         g.rbac_filters = {}
     return view_helpers.ensure_has_permission(

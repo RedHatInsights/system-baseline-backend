@@ -46,6 +46,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '405':
+          $ref: '#/components/responses/NotAllowed'
         '500':
           $ref: '#/components/responses/InternalServerError'
     post:
@@ -70,6 +72,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '405':
+          $ref: '#/components/responses/NotAllowed'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /baselines/deletion_request:
@@ -94,6 +98,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '405':
+          $ref: '#/components/responses/NotAllowed'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /baselines/{baseline_ids}:
@@ -177,6 +183,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '405':
+          $ref: '#/components/responses/NotAllowed'
         '500':
           $ref: '#/components/responses/InternalServerError'
     post:
@@ -201,6 +209,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '405':
+          $ref: '#/components/responses/NotAllowed'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /baselines/{baseline_id}/systems:
@@ -263,6 +273,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '405':
+          $ref: '#/components/responses/NotAllowed'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /baselines/{baseline_id}/systems/{system_ids}:
@@ -310,6 +322,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '405':
+          $ref: '#/components/responses/NotAllowed'
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
@@ -328,6 +342,12 @@ components:
             $ref: "#/components/schemas/Error"
     BadRequest:
       description: "The server could not process the current request."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotAllowed:
+      description: "Method not allowed."
       content:
         application/json:
           schema:
