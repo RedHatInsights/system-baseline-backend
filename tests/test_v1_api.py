@@ -39,6 +39,8 @@ class EmptyApiTests(ApiTest):
 
 
 class BadUUIDTests(ApiTest):
+
+    @unittest.skip("drift is being shut down")
     def test_delete_malformed_uuid(self):
         with self.client() as client:
             response = client.delete(
@@ -53,6 +55,7 @@ class BadUUIDTests(ApiTest):
 
 
 class InvalidFactsTests(ApiTest):
+    @unittest.skip("drift is being shut down")
     def test_large_facts(self):
         large_factset = []
         for i in range(2**15):  # 32K
@@ -72,6 +75,7 @@ class InvalidFactsTests(ApiTest):
 
         self.assertEqual(response.status_code, 400)
 
+    @unittest.skip("drift is being shut down")
     def test_long_name_value(self):
         with self.client() as client:
             response = client.post(
@@ -121,6 +125,7 @@ class ApiSortTests(ApiTest):
                 )
                 self.assertEqual(response.status_code, 200)
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_fetch_sorted_baseline_facts(self, mock_fetch_systems):
         with self.client() as client:
@@ -180,6 +185,7 @@ class ApiGeneralTests(ApiTest):
                 )
                 self.assertEqual(response.status_code, 200)
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_value_values(self, mock_fetch_systems):
         with self.client() as client:
@@ -195,6 +201,7 @@ class ApiGeneralTests(ApiTest):
                 response.content.decode("utf-8"),
             )
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_fetch_baseline_list(self, mock_fetch_systems):
         with self.client() as client:
@@ -205,6 +212,7 @@ class ApiGeneralTests(ApiTest):
             self.assertEqual(result["meta"]["count"], 2)
             self.assertEqual(result["meta"]["total_available"], 2)
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_fetch_baselines_missing_uuid(self, mock_fetch_systems):
         with self.client() as client:
@@ -242,6 +250,7 @@ class ApiGeneralTests(ApiTest):
             # check that the ascending result is the inverse of the descending result
             self.assertEqual(desc_result["data"][::-1], asc_result["data"])
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_create_deletion_request(self, mock_fetch_systems):
         with self.client() as client:
@@ -257,6 +266,7 @@ class ApiGeneralTests(ApiTest):
             )
             self.assertEqual(response.status_code, 200)
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_fetch_baseline_list_sort_updated(self, mock_fetch_systems):
         with self.client() as client:
@@ -289,6 +299,7 @@ class ApiGeneralTests(ApiTest):
             # check that the ascending result is the inverse of the descending result
             self.assertEqual(desc_result["data"][::-1], asc_result["data"])
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_fetch_duplicate_uuid(self, mock_fetch_systems):
         with self.client() as client:
@@ -306,6 +317,7 @@ class ApiGeneralTests(ApiTest):
             )
             self.assertEqual(response.status_code, 400)
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_fetch_baseline_search(self, mock_fetch_systems):
         with self.client() as client:
@@ -359,6 +371,7 @@ class ApiErrorHTTPTests(ApiTest):
     def tearDown(self):
         super(ApiErrorHTTPTests, self).tearDown()
 
+    @unittest.skip("drift is being shut down")
     def test_baselines_wrong_uuid(self):
         test_uuids = [
             (
@@ -525,6 +538,7 @@ class CopyBaselineTests(ApiTest):
                 )
                 self.assertEqual(response.status_code, 200)
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_copy_baseline(self, mock_fetch_systems):
         with self.client() as client:
@@ -594,6 +608,7 @@ class ApiPatchTests(ApiTest):
                 )
                 self.assertEqual(response.status_code, 200)
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_patch_baseline(self, mock_fetch_systems):
         with self.client() as client:
@@ -724,6 +739,7 @@ class CreateFromInventoryTests(ApiTest):
                 self.assertEqual(response.status_code, 200)
         super(CreateFromInventoryTests, self).tearDown()
 
+    @unittest.skip("drift is being shut down")
     @patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_create_from_inventory(self, mock_fetch):
         with self.client() as client:
@@ -742,6 +758,7 @@ class CreateFromInventoryTests(ApiTest):
             )
             self.assertEqual(response.status_code, 400)
 
+    @unittest.skip("drift is being shut down")
     @patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_create_from_inventory_not_found(self, mock_fetch):
         with self.client() as client:
@@ -757,6 +774,7 @@ class CreateFromInventoryTests(ApiTest):
                 response.content.decode("utf-8"),
             )
 
+    @unittest.skip("drift is being shut down")
     def test_create_from_inventory_bad_uuid(self):
         with self.client() as client:
             response = client.post(
@@ -781,6 +799,7 @@ class ApiDuplicateTests(ApiTest):
             self.assertEqual(response.status_code, 200)
         super(ApiDuplicateTests, self).tearDown()
 
+    @unittest.skip("drift is being shut down")
     def test_duplicate_baseline(self):
         with self.client() as client:
             response = client.post(
@@ -808,6 +827,7 @@ class ApiDuplicateTests(ApiTest):
             )
             self.assertEqual(response.status_code, 200)
 
+    @unittest.skip("drift is being shut down")
     def test_create_baseline_with_leading_trailing_whitespace(self):
         with self.client() as client:
             response = client.post(
@@ -971,6 +991,7 @@ class ApiSystemsAssociationTests(ApiTest):
                 )
                 self.assertEqual(response.status_code, 200)
 
+    @unittest.skip("drift is being shut down")
     def test_list_systems_with_baseline(self):
         with self.client() as client:
             response = client.get(
@@ -985,6 +1006,7 @@ class ApiSystemsAssociationTests(ApiTest):
             for system_id in self.system_ids:
                 self.assertIn(system_id, response_system_ids)
 
+    @unittest.skip("drift is being shut down")
     def test_list_systems_with_baseline_and_inventory_group_ids_filter(self):
         with self.client() as client:
             response = client.get(
@@ -998,6 +1020,7 @@ class ApiSystemsAssociationTests(ApiTest):
             response_system_ids = json.loads(response.content)["system_ids"]
             self.assertEqual(len(response_system_ids), 4)
 
+    @unittest.skip("drift is being shut down")
     def test_list_systems_with_baseline_and_inventory_group_names_filter(self):
         with self.client() as client:
             response = client.get(
@@ -1011,6 +1034,7 @@ class ApiSystemsAssociationTests(ApiTest):
             response_system_ids = json.loads(response.content)["system_ids"]
             self.assertEqual(len(response_system_ids), 4)
 
+    @unittest.skip("drift is being shut down")
     def test_list_systems_with_baseline_and_inventory_group_ids_and_names_filter(self):
         with self.client() as client:
             response = client.get(
@@ -1025,6 +1049,7 @@ class ApiSystemsAssociationTests(ApiTest):
             response_system_ids = json.loads(response.content)["system_ids"]
             self.assertEqual(len(response_system_ids), 4)
 
+    @unittest.skip("drift is being shut down")
     def test_list_systems_with_baseline_and_inventory_group_filter_non_grouped(self):
         with self.client() as client:
             response = client.get(
@@ -1038,6 +1063,7 @@ class ApiSystemsAssociationTests(ApiTest):
             response_system_ids = json.loads(response.content)["system_ids"]
             self.assertEqual(len(response_system_ids), 3)
 
+    @unittest.skip("drift is being shut down")
     def test_delete_systems_with_baseline(self):
         # to delete
         system_ids = [
@@ -1067,6 +1093,7 @@ class ApiSystemsAssociationTests(ApiTest):
             response_system_ids = json.loads(response.content)
             self.assertEqual(len(response_system_ids), 1)
 
+    @unittest.skip("drift is being shut down")
     def test_delete_systems_with_baseline_deletion_request(self):
         # to delete
         system_ids = [
@@ -1095,6 +1122,7 @@ class ApiSystemsAssociationTests(ApiTest):
             response_system_ids = json.loads(response.content)
             self.assertEqual(len(response_system_ids), 1)
 
+    @unittest.skip("drift is being shut down")
     def test_delete_nonexistent_system(self):
         # to delete
         system_ids = [
@@ -1122,6 +1150,7 @@ class ApiSystemsAssociationTests(ApiTest):
             response_system_ids = json.loads(response.content)["system_ids"]
             self.assertEqual(len(response_system_ids), 5)
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_adding_few_systems(self, mock_fetch_systems):
         # to create
@@ -1152,6 +1181,7 @@ class ApiSystemsAssociationTests(ApiTest):
             for system_id in system_ids:
                 self.assertIn(system_id, response_system_ids)
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_get_system_count_for_baselines(self, mock_fetch_systems):
         with self.client() as client:
@@ -1161,6 +1191,7 @@ class ApiSystemsAssociationTests(ApiTest):
             result = json.loads(response.content)
             self.assertEqual(result["data"][0]["mapped_system_count"], 5)
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_get_system_count_for_baselines_by_ids(self, mock_fetch_systems):
         with self.client() as client:

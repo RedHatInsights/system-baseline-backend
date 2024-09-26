@@ -97,6 +97,7 @@ class ApiSystemsAssociationTests(ApiTest):
                 )
                 self.assertEqual(response.status_code, 200)
 
+    @unittest.skip("drift is being shut down")
     def test_list_systems_with_baseline(self):
         with self.client() as client:
             response = client.get(
@@ -111,6 +112,7 @@ class ApiSystemsAssociationTests(ApiTest):
             for system_id in self.system_ids:
                 self.assertIn(system_id, response_system_ids)
 
+    @unittest.skip("drift is being shut down")
     def test_delete_systems_with_baseline(self):
         with self.client() as client:
             # to delete
@@ -139,6 +141,7 @@ class ApiSystemsAssociationTests(ApiTest):
             response_system_ids = json.loads(response.content)
             self.assertEqual(len(response_system_ids), 1)
 
+    @unittest.skip("drift is being shut down")
     def test_delete_nonexistent_system(self):
         with self.client() as client:
             # to delete
@@ -166,6 +169,7 @@ class ApiSystemsAssociationTests(ApiTest):
             response_system_ids = json.loads(response.content)["system_ids"]
             self.assertNotIn(system_ids[0], response_system_ids)
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_adding_few_systems(self, mock_fetch_systems):
         with self.client() as client:
@@ -197,6 +201,7 @@ class ApiSystemsAssociationTests(ApiTest):
             for system_id in system_ids:
                 self.assertIn(system_id, response_system_ids)
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_deleting_systems_by_id(
         self,
@@ -252,6 +257,7 @@ class ApiSystemsAssociationTests(ApiTest):
             for system_id in system_ids_to_remain:
                 self.assertIn(system_id, response_system_ids)
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_creating_deletion_request_for_systems_by_id(self, mock_fetch_systems):
         with self.client() as client:
@@ -364,6 +370,7 @@ class InternalApiBaselinesTests(ApiTest):
                 )
                 self.assertEqual(response.status_code, 200)
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_no_baselines_by_system_id(self, mock_fetch_systems):
         with self.client() as client:
@@ -380,6 +387,7 @@ class InternalApiBaselinesTests(ApiTest):
             response_baseline_ids = json.loads(response.content)
             self.assertEqual(len(response_baseline_ids), 0)
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_one_baseline_by_system_id(self, mock_fetch_systems):
         with self.client() as client:
@@ -405,6 +413,7 @@ class InternalApiBaselinesTests(ApiTest):
             response_baseline_ids = json.loads(response.content)
             self.assertEqual(len(response_baseline_ids), len(baseline_ids))
 
+    @unittest.skip("drift is being shut down")
     @mock.patch("system_baseline.views.v1.fetch_systems_with_profiles")
     def test_few_baselines_by_system_id(self, mock_fetch_systems):
         with self.client() as client:
@@ -494,6 +503,7 @@ class ApiMappedSystemPatchTests(ApiTest):
                 )
                 self.assertEqual(response.status_code, 200)
 
+    @unittest.skip("drift is being shut down")
     def test_update_mapped_system_with_groups(self):
         with self.client() as client:
             response = client.patch(
@@ -520,6 +530,7 @@ class ApiMappedSystemPatchTests(ApiTest):
                     ],
                 )
 
+    @unittest.skip("drift is being shut down")
     def test_update_mapped_system_without_groups(self):
         with self.client() as client:
             response = client.patch(
@@ -535,6 +546,7 @@ class ApiMappedSystemPatchTests(ApiTest):
             for system in systems:
                 self.assertEqual(system.groups, [])
 
+    @unittest.skip("drift is being shut down")
     def test_update_mapped_system_with_other_data(self):
         with self.client() as client:
             response = client.patch(
@@ -582,6 +594,7 @@ class ApiMappedSystemPatchTests(ApiTest):
                     ],
                 )
 
+    @unittest.skip("drift is being shut down")
     def test_update_not_existing_mapped_system(self):
         with self.client() as client:
             system_id = str(uuid.uuid4())
