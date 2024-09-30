@@ -37,16 +37,25 @@ def create_connexion_app():
     flask_app.url_map.strict_slashes = True  # it needs to be set before add_api call
 
     connexion_app.add_api(
-        "api.spec.yaml", arguments=openapi_args, strict_validation=True, validate_responses=True
+        "api.spec.yaml",
+        arguments=openapi_args,
+        strict_validation=True,
+        validate_responses=True,
+        resolver_error=405,
     )
     connexion_app.add_api(
         "internal_api.spec.yaml",
         arguments=openapi_args,
         strict_validation=True,
         validate_responses=True,
+        resolver_error=405,
     )
-    connexion_app.add_api("mgmt_api.spec.yaml", arguments=openapi_args, strict_validation=True)
-    connexion_app.add_api("admin_api.spec.yaml", arguments=openapi_args, strict_validation=True)
+    connexion_app.add_api(
+        "mgmt_api.spec.yaml", arguments=openapi_args, strict_validation=True, resolver_error=405
+    )
+    connexion_app.add_api(
+        "admin_api.spec.yaml", arguments=openapi_args, strict_validation=True, resolver_error=405
+    )
 
     # set up logging ASAP
     setup_audit_logging()

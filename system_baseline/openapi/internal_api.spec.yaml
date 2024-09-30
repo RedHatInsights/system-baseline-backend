@@ -74,7 +74,7 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
         '405':
-          $ref: '#/components/responses/NotAllowed'
+          $ref: '#/components/responses/NotImplemented'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /systems/{system_ids}:
@@ -121,7 +121,7 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
         '405':
-          $ref: '#/components/responses/NotAllowed'
+          $ref: '#/components/responses/NotImplemented'
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
@@ -144,8 +144,8 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
-    NotAllowed:
-      description: "Method not allowed."
+    NotImplemented:
+      description: "Method not implemented."
       content:
         application/json:
           schema:

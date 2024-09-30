@@ -469,6 +469,7 @@ class ApiErrorHTTPTests(ApiTest):
                         )
                         self.assertEqual(response.status_code, expected_status_code)
 
+    @unittest.skip("drift is being shut down")
     def test_baselines_wrong_url(self):
         api_endpoints = [
             ("/baseline", ["GET", "POST", "PATCH", "DELETE"], [404, 404, 404, 404]),

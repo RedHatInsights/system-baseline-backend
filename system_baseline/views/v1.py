@@ -1,12 +1,8 @@
 from http import HTTPStatus
 
-import jsonpatch
-import jsonpointer
-
 from flask import Blueprint, current_app, g, request
 from kerlescan import profile_parser, view_helpers
-from kerlescan.exceptions import HTTPError, ItemNotReturned, RBACDenied
-from kerlescan.hsp_service_interface import fetch_historical_sys_profiles
+from kerlescan.exceptions import HTTPError, ItemNotReturned
 from kerlescan.inventory_service_interface import fetch_systems_with_profiles
 from kerlescan.paginate import build_paginated_baseline_list_response
 from kerlescan.service_interface import get_key_from_headers
@@ -15,7 +11,6 @@ from sqlalchemy import func
 from sqlalchemy.orm.session import make_transient
 
 from system_baseline import metrics, validators
-from system_baseline.exceptions import FactValidationError
 from system_baseline.global_helpers import (
     ensure_rbac_baselines_read,
     ensure_rbac_baselines_write,
@@ -395,135 +390,136 @@ def get_event_counters():
     }
 
 
-@metrics.baseline_create_requests.time()
-@metrics.api_exceptions.count_exceptions()
-def create_baseline(system_baseline_in):
-    """
-    create a baseline
-    """
-
-    raise HTTPError(HTTPStatus.METHOD_NOT_ALLOWED, "")
-    ensure_rbac_baselines_write()
-    account_number = view_helpers.get_account_number(request)
-    org_id = view_helpers.get_org_id(request)
-
-    if "values" in system_baseline_in and "value" in system_baseline_in:
-        message = "'values' and 'value' cannot both be defined for system baseline"
-        current_app.logger.audit(message, request=request, success=False)
-        raise HTTPError(
-            HTTPStatus.BAD_REQUEST,
-            message=message,
-        )
-
-    _check_for_existing_display_name(system_baseline_in["display_name"], account_number, org_id)
-    _check_for_whitespace_in_display_name(system_baseline_in["display_name"])
-
-    message = "counted baselines"
-    current_app.logger.audit(message, request=request)
-
-    baseline_facts = []
-    if "baseline_facts" in system_baseline_in:
-        if "inventory_uuid" in system_baseline_in:
-            message = "Both baseline facts and inventory id provided, can clone only one."
-            current_app.logger.audit(message, request=request, success=False)
-            raise HTTPError(
-                HTTPStatus.BAD_REQUEST,
-                message=message,
-            )
-        if "hsp_uuid" in system_baseline_in:
-            message = "Both baseline facts and hsp id provided, can clone only one."
-            current_app.logger.audit(message, request=request, success=False)
-            raise HTTPError(
-                HTTPStatus.BAD_REQUEST,
-                message=message,
-            )
-        baseline_facts = system_baseline_in["baseline_facts"]
-    elif "hsp_uuid" in system_baseline_in:
-        if "inventory_uuid" in system_baseline_in:
-            message = "Both hsp id and system id provided, can clone only one."
-            current_app.logger.audit(message, request=request, success=False)
-            raise HTTPError(
-                HTTPStatus.BAD_REQUEST,
-                message=message,
-            )
-        validate_uuids([system_baseline_in["hsp_uuid"]])
-        auth_key = get_key_from_headers(request.headers)
-        try:
-            hsp = fetch_historical_sys_profiles(
-                [system_baseline_in["hsp_uuid"]],
-                auth_key,
-                current_app.logger,
-                get_event_counters(),
-            )[0]
-            message = "read historical system profiles"
-            current_app.logger.audit(message, request=request)
-        except ItemNotReturned:
-            message = "hsp UUID %s not available" % system_baseline_in["hsp_uuid"]
-            current_app.logger.audit(message, request=request, success=False)
-            raise HTTPError(
-                HTTPStatus.NOT_FOUND,
-                message=message,
-            )
-        except RBACDenied as error:
-            message = error.message
-            current_app.logger.audit(message, request=request, success=False)
-            raise HTTPError(HTTPStatus.FORBIDDEN, message=message)
-
-        system_name = "clone_from_hsp_unused"
-        baseline_facts = _parse_from_sysprofile(
-            hsp["system_profile"], system_name, current_app.logger
-        )
-    elif "inventory_uuid" in system_baseline_in:
-        validate_uuids([system_baseline_in["inventory_uuid"]])
-        auth_key = get_key_from_headers(request.headers)
-        try:
-            system_with_profile = fetch_systems_with_profiles(
-                [system_baseline_in["inventory_uuid"]],
-                auth_key,
-                current_app.logger,
-                get_event_counters(),
-            )[0]
-            message = "read system with profiles"
-            current_app.logger.audit(message, request=request)
-        except ItemNotReturned:
-            message = "inventory UUID %s not available" % system_baseline_in["inventory_uuid"]
-            current_app.logger.audit(message, request=request, success=False)
-            raise HTTPError(
-                HTTPStatus.NOT_FOUND,
-                message=message,
-            )
-        except RBACDenied as error:
-            message = error.message
-            current_app.logger.audit(message, request=request, success=False)
-            raise HTTPError(HTTPStatus.FORBIDDEN, message=message)
-
-        system_name = profile_parser.get_name(system_with_profile)
-        baseline_facts = _parse_from_sysprofile(
-            system_with_profile["system_profile"], system_name, current_app.logger
-        )
-
-    try:
-        _validate_facts(baseline_facts)
-    except FactValidationError as error:
-        message = error.message
-        current_app.logger.audit(message, request=request, success=False)
-        raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
-
-    baseline = SystemBaseline(
-        account=account_number,
-        org_id=org_id,
-        display_name=system_baseline_in["display_name"],
-        baseline_facts=baseline_facts,
-    )
-    baseline.baseline_facts = _sort_baseline_facts(baseline.baseline_facts)
-    db.session.add(baseline)
-
-    db.session.commit()  # commit now so we get a created/updated time before json conversion
-
-    message = "create baselines"
-    current_app.logger.audit(message, request=request)
-
-    return baseline.to_json(withhold_systems_count=False)
+# @metrics.baseline_create_requests.time()
+# @metrics.api_exceptions.count_exceptions()
+# def create_baseline(system_baseline_in):
+#     """
+#     create a baseline
+#     """
+#
+#     raise HTTPError(HTTPStatus.NOT_IMPLEMENTED, "")
+#     ensure_rbac_baselines_write()
+#     account_number = view_helpers.get_account_number(request)
+#     org_id = view_helpers.get_org_id(request)
+#
+#     if "values" in system_baseline_in and "value" in system_baseline_in:
+#         message = "'values' and 'value' cannot both be defined for system baseline"
+#         current_app.logger.audit(message, request=request, success=False)
+#         raise HTTPError(
+#             HTTPStatus.BAD_REQUEST,
+#             message=message,
+#         )
+#
+#     _check_for_existing_display_name(system_baseline_in["display_name"], account_number, org_id)
+#     _check_for_whitespace_in_display_name(system_baseline_in["display_name"])
+#
+#     message = "counted baselines"
+#     current_app.logger.audit(message, request=request)
+#
+#     baseline_facts = []
+#     if "baseline_facts" in system_baseline_in:
+#         if "inventory_uuid" in system_baseline_in:
+#             message = "Both baseline facts and inventory id provided, can clone only one."
+#             current_app.logger.audit(message, request=request, success=False)
+#             raise HTTPError(
+#                 HTTPStatus.BAD_REQUEST,
+#                 message=message,
+#             )
+#         if "hsp_uuid" in system_baseline_in:
+#             message = "Both baseline facts and hsp id provided, can clone only one."
+#             current_app.logger.audit(message, request=request, success=False)
+#             raise HTTPError(
+#                 HTTPStatus.BAD_REQUEST,
+#                 message=message,
+#             )
+#         baseline_facts = system_baseline_in["baseline_facts"]
+#     elif "hsp_uuid" in system_baseline_in:
+#         if "inventory_uuid" in system_baseline_in:
+#             message = "Both hsp id and system id provided, can clone only one."
+#             current_app.logger.audit(message, request=request, success=False)
+#             raise HTTPError(
+#                 HTTPStatus.BAD_REQUEST,
+#                 message=message,
+#             )
+#         validate_uuids([system_baseline_in["hsp_uuid"]])
+#         auth_key = get_key_from_headers(request.headers)
+#         try:
+#             hsp = fetch_historical_sys_profiles(
+#                 [system_baseline_in["hsp_uuid"]],
+#                 auth_key,
+#                 current_app.logger,
+#                 get_event_counters(),
+#             )[0]
+#             message = "read historical system profiles"
+#             current_app.logger.audit(message, request=request)
+#         except ItemNotReturned:
+#             message = "hsp UUID %s not available" % system_baseline_in["hsp_uuid"]
+#             current_app.logger.audit(message, request=request, success=False)
+#             raise HTTPError(
+#                 HTTPStatus.NOT_FOUND,
+#                 message=message,
+#             )
+#         except RBACDenied as error:
+#             message = error.message
+#             current_app.logger.audit(message, request=request, success=False)
+#             raise HTTPError(HTTPStatus.FORBIDDEN, message=message)
+#
+#         system_name = "clone_from_hsp_unused"
+#         baseline_facts = _parse_from_sysprofile(
+#             hsp["system_profile"], system_name, current_app.logger
+#         )
+#     elif "inventory_uuid" in system_baseline_in:
+#         validate_uuids([system_baseline_in["inventory_uuid"]])
+#         auth_key = get_key_from_headers(request.headers)
+#         try:
+#             system_with_profile = fetch_systems_with_profiles(
+#                 [system_baseline_in["inventory_uuid"]],
+#                 auth_key,
+#                 current_app.logger,
+#                 get_event_counters(),
+#             )[0]
+#             message = "read system with profiles"
+#             current_app.logger.audit(message, request=request)
+#         except ItemNotReturned:
+#             message = "inventory UUID %s not available" % system_baseline_in["inventory_uuid"]
+#             current_app.logger.audit(message, request=request, success=False)
+#             raise HTTPError(
+#                 HTTPStatus.NOT_FOUND,
+#                 message=message,
+#             )
+#         except RBACDenied as error:
+#             message = error.message
+#             current_app.logger.audit(message, request=request, success=False)
+#             raise HTTPError(HTTPStatus.FORBIDDEN, message=message)
+#
+#         system_name = profile_parser.get_name(system_with_profile)
+#         baseline_facts = _parse_from_sysprofile(
+#             system_with_profile["system_profile"], system_name, current_app.logger
+#         )
+#
+#     try:
+#         _validate_facts(baseline_facts)
+#     except FactValidationError as error:
+#         message = error.message
+#         current_app.logger.audit(message, request=request, success=False)
+#         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
+#
+#     baseline = SystemBaseline(
+#         account=account_number,
+#         org_id=org_id,
+#         display_name=system_baseline_in["display_name"],
+#         baseline_facts=baseline_facts,
+#     )
+#     baseline.baseline_facts = _sort_baseline_facts(baseline.baseline_facts)
+#     db.session.add(baseline)
+#
+#     db.session.commit()  # commit now so we get a created/updated time before json conversion
+#
+#     message = "create baselines"
+#     current_app.logger.audit(message, request=request)
+#
+#     return baseline.to_json(withhold_systems_count=False)
+#
 
 
 def _check_for_existing_display_name(display_name, account_number, org_id):
@@ -642,92 +638,93 @@ def copy_baseline_by_id(baseline_id, display_name):
     return copy_baseline.to_json(withhold_systems_count=False)
 
 
-def update_baseline(baseline_id, system_baseline_patch):
-    """
-    update a baseline
-    """
-    raise HTTPError(HTTPStatus.METHOD_NOT_ALLOWED, "")
-
-    current_app.logger.info(system_baseline_patch)
-    ensure_rbac_baselines_write()
-    validate_uuids([baseline_id])
-
-    account_number = view_helpers.get_account_number(request)
-    org_id = view_helpers.get_org_id(request)
-    _check_for_whitespace_in_display_name(system_baseline_patch["display_name"])
-
-    # this query is a bit different than what's in _check_for_existing_display_name,
-    # since it's OK if the display name is used by the baseline we are updating
-    if org_id:
-        existing_display_name_query = SystemBaseline.query.filter(
-            SystemBaseline.org_id == org_id,
-            SystemBaseline.id != baseline_id,
-            SystemBaseline.display_name == system_baseline_patch["display_name"],
-        )
-    else:
-        existing_display_name_query = SystemBaseline.query.filter(
-            SystemBaseline.account == account_number,
-            SystemBaseline.id != baseline_id,
-            SystemBaseline.display_name == system_baseline_patch["display_name"],
-        )
-
-    if existing_display_name_query.count() > 0:
-        message = "A baseline with this name already exists."
-        current_app.logger.audit(message, request=request, success=False)
-        raise HTTPError(
-            HTTPStatus.BAD_REQUEST,
-            message=message,
-        )
-
-    if org_id:
-        query = SystemBaseline.query.filter(
-            SystemBaseline.org_id == org_id, SystemBaseline.id == baseline_id
-        )
-    else:
-        query = SystemBaseline.query.filter(
-            SystemBaseline.account == account_number, SystemBaseline.id == baseline_id
-        )
-
-    baseline = query.first_or_404()
-    message = "read baselines"
-    current_app.logger.audit(message, request=request)
-
-    try:
-        updated_facts = jsonpatch.apply_patch(
-            baseline.baseline_facts, system_baseline_patch["facts_patch"]
-        )
-        _validate_facts(updated_facts)
-        baseline.baseline_facts = updated_facts
-    except FactValidationError as error:
-        message = error.message
-        current_app.logger.audit(message, request=request, success=False)
-        raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
-    except (jsonpatch.JsonPatchException, jsonpointer.JsonPointerException):
-        message = "unable to apply patch to baseline"
-        current_app.logger.audit(message, request=request, success=False)
-        raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
-
-    baseline.display_name = system_baseline_patch["display_name"]
-    if "notifications_enabled" in system_baseline_patch.keys():
-        baseline.notifications_enabled = system_baseline_patch["notifications_enabled"]
-    baseline.baseline_facts = _sort_baseline_facts(baseline.baseline_facts)
-    db.session.add(baseline)
-
-    db.session.commit()
-
-    message = "updated baselines"
-    current_app.logger.audit(message, request=request)
-
-    # pull baseline again so we have the correct updated timestamp and fact count
-    if org_id:
-        query = SystemBaseline.query.filter(
-            SystemBaseline.account == account_number, SystemBaseline.id == baseline_id
-        )
-    else:
-        query = SystemBaseline.query.filter(
-            SystemBaseline.org_id == org_id, SystemBaseline.id == baseline_id
-        )
-    return [query.first().to_json()]
+# def update_baseline(baseline_id, system_baseline_patch):
+#     """
+#     update a baseline
+#     """
+#     raise HTTPError(HTTPStatus.NOT_IMPLEMENTED, "")
+#
+#     current_app.logger.info(system_baseline_patch)
+#     ensure_rbac_baselines_write()
+#     validate_uuids([baseline_id])
+#
+#     account_number = view_helpers.get_account_number(request)
+#     org_id = view_helpers.get_org_id(request)
+#     _check_for_whitespace_in_display_name(system_baseline_patch["display_name"])
+#
+#     # this query is a bit different than what's in _check_for_existing_display_name,
+#     # since it's OK if the display name is used by the baseline we are updating
+#     if org_id:
+#         existing_display_name_query = SystemBaseline.query.filter(
+#             SystemBaseline.org_id == org_id,
+#             SystemBaseline.id != baseline_id,
+#             SystemBaseline.display_name == system_baseline_patch["display_name"],
+#         )
+#     else:
+#         existing_display_name_query = SystemBaseline.query.filter(
+#             SystemBaseline.account == account_number,
+#             SystemBaseline.id != baseline_id,
+#             SystemBaseline.display_name == system_baseline_patch["display_name"],
+#         )
+#
+#     if existing_display_name_query.count() > 0:
+#         message = "A baseline with this name already exists."
+#         current_app.logger.audit(message, request=request, success=False)
+#         raise HTTPError(
+#             HTTPStatus.BAD_REQUEST,
+#             message=message,
+#         )
+#
+#     if org_id:
+#         query = SystemBaseline.query.filter(
+#             SystemBaseline.org_id == org_id, SystemBaseline.id == baseline_id
+#         )
+#     else:
+#         query = SystemBaseline.query.filter(
+#             SystemBaseline.account == account_number, SystemBaseline.id == baseline_id
+#         )
+#
+#     baseline = query.first_or_404()
+#     message = "read baselines"
+#     current_app.logger.audit(message, request=request)
+#
+#     try:
+#         updated_facts = jsonpatch.apply_patch(
+#             baseline.baseline_facts, system_baseline_patch["facts_patch"]
+#         )
+#         _validate_facts(updated_facts)
+#         baseline.baseline_facts = updated_facts
+#     except FactValidationError as error:
+#         message = error.message
+#         current_app.logger.audit(message, request=request, success=False)
+#         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
+#     except (jsonpatch.JsonPatchException, jsonpointer.JsonPointerException):
+#         message = "unable to apply patch to baseline"
+#         current_app.logger.audit(message, request=request, success=False)
+#         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
+#
+#     baseline.display_name = system_baseline_patch["display_name"]
+#     if "notifications_enabled" in system_baseline_patch.keys():
+#         baseline.notifications_enabled = system_baseline_patch["notifications_enabled"]
+#     baseline.baseline_facts = _sort_baseline_facts(baseline.baseline_facts)
+#     db.session.add(baseline)
+#
+#     db.session.commit()
+#
+#     message = "updated baselines"
+#     current_app.logger.audit(message, request=request)
+#
+#     # pull baseline again so we have the correct updated timestamp and fact count
+#     if org_id:
+#         query = SystemBaseline.query.filter(
+#             SystemBaseline.account == account_number, SystemBaseline.id == baseline_id
+#         )
+#     else:
+#         query = SystemBaseline.query.filter(
+#             SystemBaseline.org_id == org_id, SystemBaseline.id == baseline_id
+#         )
+#     return [query.first().to_json()]
+#
 
 
 def list_systems_with_baseline(baseline_id, group_ids=None, group_names=None):
@@ -787,63 +784,64 @@ def _filter_inventory_groups_data(groups):
     ]
 
 
-def create_systems_with_baseline(baseline_id, body):
-    raise HTTPError(HTTPStatus.METHOD_NOT_ALLOWED, "")
-
-    ensure_rbac_notifications_write()
-    validate_uuids([baseline_id])
-    system_ids = body["system_ids"]
-    validate_uuids(system_ids)
-    if len(set(system_ids)) < len(system_ids):
-        message = "duplicate IDs in request"
-        current_app.logger.audit(message, request=request, success=False)
-        raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
-    account_number = view_helpers.get_account_number(request)
-    org_id = view_helpers.get_org_id(request)
-
-    if org_id:
-        query = SystemBaseline.query.filter(
-            SystemBaseline.org_id == org_id, SystemBaseline.id == baseline_id
-        )
-    else:
-        query = SystemBaseline.query.filter(
-            SystemBaseline.account == account_number, SystemBaseline.id == baseline_id
-        )
-    baseline = query.first_or_404()
-
-    message = "read baseline"
-    current_app.logger.audit(message, request=request, success=True)
-
-    try:
-        auth_key = get_key_from_headers(request.headers)
-        systems_with_profiles = fetch_systems_with_profiles(
-            system_ids, auth_key, current_app.logger, get_event_counters()
-        )
-        systems_groups = {
-            system.get("id"): system.get("groups") for system in systems_with_profiles
-        }
-        for system in systems_with_profiles:
-            system_id = system["id"]
-            groups = systems_groups.get(system_id)
-            if groups:
-                groups = _filter_inventory_groups_data(groups)
-            baseline.add_mapped_system(system_id, groups)
-
-        db.session.commit()
-    except ValueError as error:
-        message = str(error)
-        current_app.logger.audit(message, request=request, success=False)
-        raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
-    except Exception:
-        message = "Unknown error when creating systems with baseline"
-        current_app.logger.audit(message, request=request, success=False)
-        raise
-
-    message = "created systems with baseline"
-    current_app.logger.audit(message, request=request, success=True)
-
-    system_ids = baseline.mapped_system_ids()
-    return {"system_ids": system_ids}
+# def create_systems_with_baseline(baseline_id, body):
+#     raise HTTPError(HTTPStatus.NOT_IMPLEMENTED, "")
+#
+#     ensure_rbac_notifications_write()
+#     validate_uuids([baseline_id])
+#     system_ids = body["system_ids"]
+#     validate_uuids(system_ids)
+#     if len(set(system_ids)) < len(system_ids):
+#         message = "duplicate IDs in request"
+#         current_app.logger.audit(message, request=request, success=False)
+#         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
+#     account_number = view_helpers.get_account_number(request)
+#     org_id = view_helpers.get_org_id(request)
+#
+#     if org_id:
+#         query = SystemBaseline.query.filter(
+#             SystemBaseline.org_id == org_id, SystemBaseline.id == baseline_id
+#         )
+#     else:
+#         query = SystemBaseline.query.filter(
+#             SystemBaseline.account == account_number, SystemBaseline.id == baseline_id
+#         )
+#     baseline = query.first_or_404()
+#
+#     message = "read baseline"
+#     current_app.logger.audit(message, request=request, success=True)
+#
+#     try:
+#         auth_key = get_key_from_headers(request.headers)
+#         systems_with_profiles = fetch_systems_with_profiles(
+#             system_ids, auth_key, current_app.logger, get_event_counters()
+#         )
+#         systems_groups = {
+#             system.get("id"): system.get("groups") for system in systems_with_profiles
+#         }
+#         for system in systems_with_profiles:
+#             system_id = system["id"]
+#             groups = systems_groups.get(system_id)
+#             if groups:
+#                 groups = _filter_inventory_groups_data(groups)
+#             baseline.add_mapped_system(system_id, groups)
+#
+#         db.session.commit()
+#     except ValueError as error:
+#         message = str(error)
+#         current_app.logger.audit(message, request=request, success=False)
+#         raise HTTPError(HTTPStatus.BAD_REQUEST, message=message)
+#     except Exception:
+#         message = "Unknown error when creating systems with baseline"
+#         current_app.logger.audit(message, request=request, success=False)
+#         raise
+#
+#     message = "created systems with baseline"
+#     current_app.logger.audit(message, request=request, success=True)
+#
+#     system_ids = baseline.mapped_system_ids()
+#     return {"system_ids": system_ids}
+#
 
 
 def delete_systems_with_baseline(baseline_id, system_ids):

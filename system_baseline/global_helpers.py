@@ -62,7 +62,7 @@ def ensure_rbac_baselines_write():
     # baselines:read in order to allow access.
 
     raise HTTPError(
-        HTTPStatus.METHOD_NOT_ALLOWED, message="Write permission decommissioned on Sep. 30,, 2024."
+        HTTPStatus.NOT_IMPLEMENTED, message="Write permission decommissioned on Sep. 30,, 2024."
     )
 
     if g.get("rbac_filters") is None:
