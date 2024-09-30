@@ -1,8 +1,5 @@
-from http import HTTPStatus
-
-from flask import Blueprint, abort, current_app, request
+from flask import Blueprint, current_app, request
 from kerlescan import view_helpers
-from kerlescan.exceptions import HTTPError
 from kerlescan.view_helpers import validate_uuids
 
 from system_baseline import metrics
@@ -80,32 +77,32 @@ def delete_systems_by_ids(system_ids):
     return "OK"
 
 
-@metrics.baseline_delete_requests.time()
-@metrics.api_exceptions.count_exceptions()
-def create_systems_deletion_request(body):
-    """
-    delete a list of systems given their system IDs as a list
-    """
-    raise HTTPError(
-        HTTPStatus.METHOD_NOT_ALLOWED, message="Write permission decommissioned on Sep. 30,, 2024."
-    )
-    system_ids = body["system_ids"]
-    return delete_systems_by_ids(system_ids)
+# @metrics.baseline_delete_requests.time()
+# @metrics.api_exceptions.count_exceptions()
+# def create_systems_deletion_request(body):
+#     """
+#     delete a list of systems given their system IDs as a list
+#     """
+#     raise HTTPError(
+#         HTTPStatus.NOT_IMPLEMENTED, message="Write permission decommissioned on Sep. 30,, 2024."
+#     )
+#     system_ids = body["system_ids"]
+#     return delete_systems_by_ids(system_ids)
+#
 
-
-def update_system(system_id, system_patch):
-    raise HTTPError(
-        HTTPStatus.METHOD_NOT_ALLOWED, message="Write permission decommissioned on Sep. 30,, 2024."
-    )
-
-    if system_patch:
-        groups = system_patch.get("groups", [])
-    else:
-        groups = []
-
-    updated_systems = SystemBaselineMappedSystem.update_systems(system_id, groups=groups)
-
-    if not updated_systems:
-        abort(404)
-    else:
-        return [system.to_json() for system in updated_systems]
+# def update_system(system_id, system_patch):
+#     raise HTTPError(
+#         HTTPStatus.NOT_IMPLEMENTED, message="Write permission decommissioned on Sep. 30,, 2024."
+#     )
+#
+#     if system_patch:
+#         groups = system_patch.get("groups", [])
+#     else:
+#         groups = []
+#
+#     updated_systems = SystemBaselineMappedSystem.update_systems(system_id, groups=groups)
+#
+#     if not updated_systems:
+#         abort(404)
+#     else:
+#         return [system.to_json() for system in updated_systems]
